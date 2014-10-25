@@ -24,8 +24,8 @@ import (
 
 // Options is a struct for specifying configuration options for the Cors middleware.
 type Options struct {
-	// AllowedOrigins is a list of domains a cross-domain request can be executed from.
-	// If the special "*" value is present in the list, all domains will be allowed.
+	// AllowedOrigins is a list of origins a cross-domain request can be executed from.
+	// If the special "*" value is present in the list, all origins will be allowed.
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowedMethods is a list of methods the client is allowed to use with

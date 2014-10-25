@@ -45,12 +45,12 @@ func TestWildcardOrigin(t *testing.T) {
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "",
@@ -61,17 +61,17 @@ func TestWildcardOrigin(t *testing.T) {
 
 func TestAllowedOrigin(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "",
@@ -82,12 +82,12 @@ func TestAllowedOrigin(t *testing.T) {
 
 func TestDisallowedOrigin(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "barbaz.com")
+	req.Header.Add("Origin", "http://barbaz.com")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
@@ -103,19 +103,19 @@ func TestDisallowedOrigin(t *testing.T) {
 
 func TestAllowedMethod(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 		AllowedMethods: []string{"PUT", "DELETE"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 	req.Header.Add("Access-Control-Request-Method", "PUT")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "PUT, DELETE",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "",
@@ -126,13 +126,13 @@ func TestAllowedMethod(t *testing.T) {
 
 func TestDisallowedMethod(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 		AllowedMethods: []string{"PUT", "DELETE"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 	req.Header.Add("Access-Control-Request-Method", "PATCH")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
@@ -149,20 +149,20 @@ func TestDisallowedMethod(t *testing.T) {
 
 func TestAllowedHeader(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 		AllowedHeaders: []string{"X-Header-1", "x-header-2"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 	req.Header.Add("Access-Control-Request-Method", "GET")
 	req.Header.Add("Access-Control-Request-Headers", "X-Header-2, X-HEADER-1")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET, POST",
 		"Access-Control-Allow-Headers":     "X-Header-1, X-Header-2",
 		"Access-Control-Allow-Credentials": "",
@@ -173,13 +173,13 @@ func TestAllowedHeader(t *testing.T) {
 
 func TestDisallowedHeader(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 		AllowedHeaders: []string{"X-Header-1", "x-header-2"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 	req.Header.Add("Access-Control-Request-Method", "GET")
 	req.Header.Add("Access-Control-Request-Headers", "X-Header-3, X-Header-1")
 
@@ -197,18 +197,18 @@ func TestDisallowedHeader(t *testing.T) {
 
 func TestExposedHeader(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins: []string{"foobar.com"},
+		AllowedOrigins: []string{"http://foobar.com"},
 		ExposedHeaders: []string{"X-Header-1", "x-header-2"},
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "",
@@ -219,19 +219,19 @@ func TestExposedHeader(t *testing.T) {
 
 func TestAllowedCredentials(t *testing.T) {
 	s := New(Options{
-		AllowedOrigins:   []string{"foobar.com"},
+		AllowedOrigins:   []string{"http://foobar.com"},
 		AllowCredentials: true,
 	})
 
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Origin", "http://foobar.com")
 	req.Header.Add("Access-Control-Request-Method", "GET")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
-		"Access-Control-Allow-Origin":      "foobar.com",
+		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET, POST",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "true",

@@ -9,7 +9,7 @@ import (
 
 func main() {
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"foo.com"},
+		AllowedOrigins: []string{"http://foo.com"},
 	})
 
 	mux := http.NewServeMux()

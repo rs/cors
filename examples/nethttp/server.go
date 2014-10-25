@@ -7,7 +7,7 @@ import (
 
 func main() {
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"foo.com"},
+		AllowedOrigins: []string{"http://foo.com"},
 	})
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

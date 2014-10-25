@@ -8,7 +8,7 @@ import (
 
 func main() {
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"foo.com"},
+		AllowedOrigins: []string{"http://foo.com"},
 	})
 	goji.Use(c.Handler)
 
