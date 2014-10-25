@@ -75,6 +75,11 @@ func New(options Options) *Cors {
 	}
 }
 
+// Default creates a new Cors handler with all default options
+func Default() *Cors {
+	return New(Options{})
+}
+
 // Handler apply the CORS specification on the request, and add relevant CORS headers
 // as necessary.
 func (cors *Cors) Handler(h http.Handler) http.Handler {
