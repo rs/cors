@@ -61,9 +61,10 @@ or:
 
 ### More Examples
 
-* `net/http`: [examples/nethttp/](https://github.com/rs/cors/blob/master/examples/nethttp/server.go)
-* [Goji](https://goji.io): [examples/goji/](https://github.com/rs/cors/blob/master/examples/goji/server.go)
-* [Martini](http://martini.codegangsta.io): [examples/martini/](https://github.com/rs/cors/blob/master/examples/martini/server.go)
+* `net/http`: [examples/nethttp/server.go](https://github.com/rs/cors/blob/master/examples/nethttp/server.go)
+* [Goji](https://goji.io): [examples/goji/server.go](https://github.com/rs/cors/blob/master/examples/goji/server.go)
+* [Martini](http://martini.codegangsta.io): [examples/martini/server.go](https://github.com/rs/cors/blob/master/examples/martini/server.go)
+* [Negori](https://github.com/codegangsta/negroni): [examples/negori/server.go](https://github.com/rs/cors/blob/master/examples/martini/server.go)
 
 ## Parameters
 
