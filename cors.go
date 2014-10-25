@@ -167,12 +167,9 @@ func (cors *Cors) isOriginAllowed(origin string) bool {
 // isMethodAllowed checks if a given method can be used as part of a cross-domain request
 // on the endpoing
 func (cors *Cors) isMethodAllowed(method string) bool {
-	if method == "" {
-		return true
-	}
 	allowedMethods := cors.options.AllowedMethods
-	if len(allowedMethods) == 0 || method == "" {
-		// If not method allowed, always return false, even for preflight request
+	if len(allowedMethods) == 0 {
+		// If no method allowed, always return false, even for preflight request
 		return false
 	}
 	method = strings.ToUpper(method)

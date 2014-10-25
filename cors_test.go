@@ -156,6 +156,7 @@ func TestAllowedHeader(t *testing.T) {
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
 	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Access-Control-Request-Method", "GET")
 	req.Header.Add("Access-Control-Request-Headers", "X-Header-2, X-HEADER-1")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
@@ -179,6 +180,7 @@ func TestDisallowedHeader(t *testing.T) {
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
 	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Access-Control-Request-Method", "GET")
 	req.Header.Add("Access-Control-Request-Headers", "X-Header-3, X-Header-1")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
@@ -224,6 +226,7 @@ func TestAllowedCredentials(t *testing.T) {
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
 	req.Header.Add("Origin", "foobar.com")
+	req.Header.Add("Access-Control-Request-Method", "GET")
 
 	s.Handler(testHandler).ServeHTTP(res, req)
 
