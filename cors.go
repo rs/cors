@@ -88,6 +88,15 @@ func (cors *Cors) Handler(h http.Handler) http.Handler {
 	})
 }
 
+// Martini compatible handler
+func (cors *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		cors.handlePreflight(w, r)
+	} else {
+		cors.handleActualRequest(w, r)
+	}
+}
+
 // handlePreflight handles pre-flight CORS requests
 func (cors *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	options := cors.options
