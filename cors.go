@@ -10,6 +10,10 @@ You can configure it by passing an option struct to cors.New:
         AllowCredentials: true,
     })
 
+Then insert the handler in the chain:
+
+    handler = c.Handler(handler)
+
 See Options documentation for more options.
 
 The resulting handler is a standard net/http handler.
@@ -22,7 +26,7 @@ import (
 	"strings"
 )
 
-// Options is a struct for specifying configuration options for the Cors middleware.
+// Options is a configuration container to setup the CORS middleware.
 type Options struct {
 	// AllowedOrigins is a list of origins a cross-domain request can be executed from.
 	// If the special "*" value is present in the list, all origins will be allowed.
@@ -46,10 +50,11 @@ type Options struct {
 }
 
 type Cors struct {
+	// The CORS Options
 	options Options
 }
 
-// New creates a new Cors handler with the provided options. Options are normalized.
+// New creates a new Cors handler with the provided options.
 func New(options Options) *Cors {
 	// Normalize options
 	// Note: for origins and methods matching, the spec requires a case-sensitive matching.
@@ -77,7 +82,7 @@ func New(options Options) *Cors {
 	}
 }
 
-// Default creates a new Cors handler with all default options
+// Default creates a new Cors handler with default options
 func Default() *Cors {
 	return New(Options{})
 }
