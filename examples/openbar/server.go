@@ -17,7 +17,5 @@ func main() {
 		w.Write([]byte("{\"hello\": \"world\"}"))
 	})
 
-	mux := http.NewServeMux()
-	mux.Handle("/", c.Handler(h))
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", c.Handler(h))
 }
