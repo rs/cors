@@ -116,7 +116,7 @@ func TestAllowedMethod(t *testing.T) {
 
 	assertHeaders(t, res.Header(), map[string]string{
 		"Access-Control-Allow-Origin":      "http://foobar.com",
-		"Access-Control-Allow-Methods":     "PUT, DELETE",
+		"Access-Control-Allow-Methods":     "PUT",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "",
 		"Access-Control-Max-Age":           "",
@@ -163,8 +163,8 @@ func TestAllowedHeader(t *testing.T) {
 
 	assertHeaders(t, res.Header(), map[string]string{
 		"Access-Control-Allow-Origin":      "http://foobar.com",
-		"Access-Control-Allow-Methods":     "GET, POST",
-		"Access-Control-Allow-Headers":     "X-Header-1, X-Header-2",
+		"Access-Control-Allow-Methods":     "GET",
+		"Access-Control-Allow-Headers":     "X-Header-2, X-Header-1",
 		"Access-Control-Allow-Credentials": "",
 		"Access-Control-Max-Age":           "",
 		"Access-Control-Expose-Headers":    "",
@@ -210,8 +210,8 @@ func TestOriginHeader(t *testing.T) {
 
 	assertHeaders(t, res.Header(), map[string]string{
 		"Access-Control-Allow-Origin":      "http://foobar.com",
-		"Access-Control-Allow-Methods":     "GET, POST",
-		"Access-Control-Allow-Headers":     "X-Header-1, X-Header-2",
+		"Access-Control-Allow-Methods":     "GET",
+		"Access-Control-Allow-Headers":     "Origin",
 		"Access-Control-Allow-Credentials": "",
 		"Access-Control-Max-Age":           "",
 		"Access-Control-Expose-Headers":    "",
@@ -255,7 +255,7 @@ func TestAllowedCredentials(t *testing.T) {
 
 	assertHeaders(t, res.Header(), map[string]string{
 		"Access-Control-Allow-Origin":      "http://foobar.com",
-		"Access-Control-Allow-Methods":     "GET, POST",
+		"Access-Control-Allow-Methods":     "GET",
 		"Access-Control-Allow-Headers":     "",
 		"Access-Control-Allow-Credentials": "true",
 		"Access-Control-Max-Age":           "",

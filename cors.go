@@ -122,16 +122,23 @@ func (cors *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "OPTIONS" || origin == "" || !cors.isOriginAllowed(origin) {
 		return
 	}
-	if !cors.isMethodAllowed(r.Header.Get("Access-Control-Request-Method")) {
+	reqMethod := r.Header.Get("Access-Control-Request-Method")
+	if !cors.isMethodAllowed(reqMethod) {
 		return
 	}
-	if !cors.areHeadersAllowed(r.Header.Get("Access-Control-Request-Headers")) {
+	reqHeaders := parseHeaderList(r.Header.Get("Access-Control-Request-Headers"))
+	if !cors.areHeadersAllowed(reqHeaders) {
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
-	headers.Set("Access-Control-Allow-Methods", strings.Join(options.AllowedMethods, ", "))
-	if len(options.AllowedHeaders) > 0 {
-		headers.Set("Access-Control-Allow-Headers", strings.Join(options.AllowedHeaders, ", "))
+	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
+	// by Access-Control-Request-Method (if supported) can be enough
+	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
+	if len(reqHeaders) > 0 {
+
+		// Spec says: Since the list of headers can be unbounded, simply returning supported headers
+		// from Access-Control-Request-Headers can be enough
+		headers.Set("Access-Control-Allow-Headers", strings.Join(reqHeaders, ", "))
 	}
 	if options.AllowCredentials {
 		headers.Set("Access-Control-Allow-Credentials", "true")
@@ -204,12 +211,11 @@ func (cors *Cors) isMethodAllowed(method string) bool {
 
 // areHeadersAllowed checks if a given list of headers are allowed to used within
 // a cross-domain request.
-func (cors *Cors) areHeadersAllowed(requestedHeaders string) bool {
-	if requestedHeaders == "" {
+func (cors *Cors) areHeadersAllowed(requestedHeaders []string) bool {
+	if len(requestedHeaders) == 0 {
 		return true
 	}
-	for _, header := range strings.Split(requestedHeaders, ",") {
-		header = toHeader(strings.TrimSpace(header))
+	for _, header := range requestedHeaders {
 		found := false
 		for _, allowedHeader := range cors.options.AllowedHeaders {
 			if header == allowedHeader {
