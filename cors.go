@@ -55,9 +55,11 @@ func New(options Options) *Cors {
 	// Note: for origins and methods matching, the spec requires a case-sensitive matching.
 	// As it may error prone, we chose to ignore the spec here.
 	normOptions := Options{
-		AllowedOrigins:   convert(options.AllowedOrigins, strings.ToLower),
-		AllowedMethods:   convert(options.AllowedMethods, strings.ToUpper),
-		AllowedHeaders:   convert(options.AllowedHeaders, toHeader),
+		AllowedOrigins: convert(options.AllowedOrigins, strings.ToLower),
+		AllowedMethods: convert(options.AllowedMethods, strings.ToUpper),
+		// Origin is always appended as some browsers will always request
+		// for this header at preflight
+		AllowedHeaders:   convert(append(options.AllowedHeaders, "Origin"), toHeader),
 		ExposedHeaders:   convert(options.ExposedHeaders, toHeader),
 		AllowCredentials: options.AllowCredentials,
 		MaxAge:           options.MaxAge,

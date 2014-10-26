@@ -195,6 +195,29 @@ func TestDisallowedHeader(t *testing.T) {
 	})
 }
 
+func TestOriginHeader(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://foobar.com"},
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://foobar.com")
+	req.Header.Add("Access-Control-Request-Method", "GET")
+	req.Header.Add("Access-Control-Request-Headers", "origin")
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Access-Control-Allow-Origin":      "http://foobar.com",
+		"Access-Control-Allow-Methods":     "GET, POST",
+		"Access-Control-Allow-Headers":     "X-Header-1, X-Header-2",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
 func TestExposedHeader(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foobar.com"},
