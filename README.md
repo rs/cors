@@ -10,8 +10,9 @@ After installing Go and setting up your [GOPATH](http://golang.org/doc/code.html
 package main
 
 import (
-    "github.com/rs/cors"
     "net/http"
+
+    "github.com/rs/cors"
 )
 
 func main() {
@@ -20,6 +21,9 @@ func main() {
         w.Write([]byte("{\"hello\": \"world\"}"))
     })
 
+    // cors.Default() setup the middleware with default options being
+    // all origins accepted with simple methods (GET, POST). See
+    // documentation below for more options.
     handler = cors.Default().Handler(handler)
     http.ListenAndServe(":8080", handler)
 }

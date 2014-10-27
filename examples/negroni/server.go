@@ -1,10 +1,10 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/codegangsta/negroni"
 	"github.com/rs/cors"
-
-	"net/http"
 )
 
 func main() {
