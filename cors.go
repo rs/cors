@@ -93,10 +93,14 @@ func (cors *Cors) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
 			cors.handlePreflight(w, r)
+			// Preflight requests are standalone and should stop the chain as some other
+			// middleware may not handle OPTIONS requests correctly. One typical example
+			// is authentication middleware ; OPTIONS requests won't carry authentication
+			// headers (see #1)
 		} else {
 			cors.handleActualRequest(w, r)
+			h.ServeHTTP(w, r)
 		}
-		h.ServeHTTP(w, r)
 	})
 }
 
@@ -113,10 +117,14 @@ func (cors *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 func (cors *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if r.Method == "OPTIONS" {
 		cors.handlePreflight(w, r)
+		// Preflight requests are standalone and should stop the chain as some other
+		// middleware may not handle OPTIONS requests correctly. One typical example
+		// is authentication middleware ; OPTIONS requests won't carry authentication
+		// headers (see #1)
 	} else {
 		cors.handleActualRequest(w, r)
+		next(w, r)
 	}
-	next(w, r)
 }
 
 // handlePreflight handles pre-flight CORS requests
