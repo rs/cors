@@ -64,8 +64,8 @@ func New(options Options) *Cors {
 		AllowedMethods: convert(options.AllowedMethods, strings.ToUpper),
 		// Origin is always appended as some browsers will always request
 		// for this header at preflight
-		AllowedHeaders:   convert(append(options.AllowedHeaders, "Origin"), toHeader),
-		ExposedHeaders:   convert(options.ExposedHeaders, toHeader),
+		AllowedHeaders:   convert(append(options.AllowedHeaders, "Origin"), http.CanonicalHeaderKey),
+		ExposedHeaders:   convert(options.ExposedHeaders, http.CanonicalHeaderKey),
 		AllowCredentials: options.AllowCredentials,
 		MaxAge:           options.MaxAge,
 	}

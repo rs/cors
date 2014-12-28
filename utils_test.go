@@ -26,11 +26,3 @@ func TestParseHeaderListEmpty(t *testing.T) {
 		t.Error("should be empty sclice")
 	}
 }
-
-func TestToHeader(t *testing.T) {
-	h := toHeader("mY-header")
-	e := "My-Header"
-	if h != e {
-		t.Errorf("%v != %v", h, e)
-	}
-}
