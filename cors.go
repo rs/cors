@@ -144,6 +144,7 @@ func (cors *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
+	headers.Add("Vary", "Origin")
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
 	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
@@ -177,6 +178,7 @@ func (cors *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
+	headers.Add("Vary", "Origin")
 	if len(options.ExposedHeaders) > 0 {
 		headers.Set("Access-Control-Expose-Headers", strings.Join(options.ExposedHeaders, ", "))
 	}
