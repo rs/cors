@@ -7,12 +7,12 @@ import (
 )
 
 func main() {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte("{\"hello\": \"world\"}"))
 	})
 
 	// Use default options
-	handler = cors.Default().Handler(handler)
+	handler := cors.Default().Handler(h)
 	http.ListenAndServe(":8080", handler)
 }
