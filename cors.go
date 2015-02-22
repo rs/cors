@@ -39,6 +39,8 @@ type Options struct {
 	AllowedMethods []string
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (GET and POST)
+	// If the special "*" value is present in the list, all headers will be allowed.
+	// Default value is [] but "Origin" is always appended to the list.
 	AllowedHeaders []string
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
@@ -326,7 +328,7 @@ func (cors *Cors) areHeadersAllowed(requestedHeaders []string) bool {
 	for _, header := range requestedHeaders {
 		found := false
 		for _, allowedHeader := range cors.options.AllowedHeaders {
-			if header == allowedHeader {
+			if allowedHeader == "*" || allowedHeader == header {
 				found = true
 				break
 			}

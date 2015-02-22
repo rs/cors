@@ -171,6 +171,30 @@ func TestAllowedHeader(t *testing.T) {
 	})
 }
 
+func TestAllowedWildcardHeader(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://foobar.com"},
+		AllowedHeaders: []string{"*"},
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://foobar.com")
+	req.Header.Add("Access-Control-Request-Method", "GET")
+	req.Header.Add("Access-Control-Request-Headers", "X-Header-2, X-HEADER-1")
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Access-Control-Allow-Origin":      "http://foobar.com",
+		"Access-Control-Allow-Methods":     "GET",
+		"Access-Control-Allow-Headers":     "X-Header-2, X-Header-1",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
 func TestDisallowedHeader(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foobar.com"},
