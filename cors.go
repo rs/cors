@@ -35,10 +35,10 @@ type Options struct {
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowedMethods is a list of methods the client is allowed to use with
-	// cross-domain requests.
+	// cross-domain requests. Default value is simple methods (GET and POST)
 	AllowedMethods []string
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
-	// cross-domain requests. Default value is simple methods (GET and POST)
+	// cross-domain requests.
 	AllowedHeaders []string
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
