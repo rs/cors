@@ -106,18 +106,14 @@ func Default() *Cors {
 func (cors *Cors) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
-			if cors.options.Debug {
-				cors.options.log.Printf("Handler: Preflight request")
-			}
+			cors.logf("Handler: Preflight request")
 			cors.handlePreflight(w, r)
 			// Preflight requests are standalone and should stop the chain as some other
 			// middleware may not handle OPTIONS requests correctly. One typical example
 			// is authentication middleware ; OPTIONS requests won't carry authentication
 			// headers (see #1)
 		} else {
-			if cors.options.Debug {
-				cors.options.log.Printf("Handler: Actual request")
-			}
+			cors.logf("Handler: Actual request")
 			cors.handleActualRequest(w, r)
 			h.ServeHTTP(w, r)
 		}
@@ -127,14 +123,10 @@ func (cors *Cors) Handler(h http.Handler) http.Handler {
 // Martini compatible handler
 func (cors *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
-		if cors.options.Debug {
-			cors.options.log.Printf("HandlerFunc: Preflight request")
-		}
+		cors.logf("HandlerFunc: Preflight request")
 		cors.handlePreflight(w, r)
 	} else {
-		if cors.options.Debug {
-			cors.options.log.Printf("HandlerFunc: Actual request")
-		}
+		cors.logf("HandlerFunc: Actual request")
 		cors.handleActualRequest(w, r)
 	}
 }
@@ -142,19 +134,14 @@ func (cors *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 // Negroni compatible interface
 func (cors *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if r.Method == "OPTIONS" {
-		if cors.options.Debug {
-			cors.options.log.Printf("ServeHTTP: Preflight request")
-		}
+		cors.logf("ServeHTTP: Preflight request")
 		cors.handlePreflight(w, r)
 		// Preflight requests are standalone and should stop the chain as some other
 		// middleware may not handle OPTIONS requests correctly. One typical example
 		// is authentication middleware ; OPTIONS requests won't carry authentication
 		// headers (see #1)
 	} else {
-		if cors.options.Debug {
-			cors.options.log.Printf("ServeHTTP: Actual request")
-		}
-
+		cors.logf("ServeHTTP: Actual request")
 		cors.handleActualRequest(w, r)
 		next(w, r)
 	}
@@ -167,40 +154,26 @@ func (cors *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 
 	if r.Method != "OPTIONS" {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Preflight aborted: %s!=OPTIONS", r.Method)
-		}
+		cors.logf("  Preflight aborted: %s!=OPTIONS", r.Method)
 		return
 	}
-
 	if origin == "" {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Preflight aborted: empty origin")
-		}
+		cors.logf("  Preflight aborted: empty origin")
 		return
 	}
-
 	if !cors.isOriginAllowed(origin) {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Preflight aborted: origin '%s' not allowed", origin)
-		}
+		cors.logf("  Preflight aborted: origin '%s' not allowed", origin)
 		return
 	}
 
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
 	if !cors.isMethodAllowed(reqMethod) {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Preflight aborted: method '%s' not allowed", reqMethod)
-		}
-
+		cors.logf("  Preflight aborted: method '%s' not allowed", reqMethod)
 		return
 	}
 	reqHeaders := parseHeaderList(r.Header.Get("Access-Control-Request-Headers"))
 	if !cors.areHeadersAllowed(reqHeaders) {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
-		}
-
+		cors.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
@@ -220,10 +193,7 @@ func (cors *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if options.MaxAge > 0 {
 		headers.Set("Access-Control-Max-Age", strconv.Itoa(options.MaxAge))
 	}
-
-	if cors.options.Debug {
-		cors.options.log.Printf("  Preflight response headers: %v", headers)
-	}
+	cors.logf("  Preflight response headers: %v", headers)
 }
 
 // handleActualRequest handles simple cross-origin requests, actual request or redirects
@@ -233,26 +203,15 @@ func (cors *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 
 	if r.Method == "OPTIONS" {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Actual request no headers added: method == %s",
-				r.Method)
-		}
+		cors.logf("  Actual request no headers added: method == %s", r.Method)
 		return
 	}
-
 	if origin == "" {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Actual request no headers added: missing origin")
-		}
+		cors.logf("  Actual request no headers added: missing origin")
 		return
 	}
-
 	if !cors.isOriginAllowed(origin) {
-		if cors.options.Debug {
-			cors.options.log.Printf("  Actual request no headers added: origin '%s' not allowed",
-				origin)
-		}
-
+		cors.logf("  Actual request no headers added: origin '%s' not allowed", origin)
 		return
 	}
 
@@ -262,7 +221,7 @@ func (cors *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	// We think it's a nice feature to be able to have control on those methods though.
 	if !cors.isMethodAllowed(r.Method) {
 		if cors.options.Debug {
-			cors.options.log.Printf("  Actual request no headers added: method '%s' not allowed",
+			cors.logf("  Actual request no headers added: method '%s' not allowed",
 				r.Method)
 		}
 
@@ -276,9 +235,13 @@ func (cors *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	if options.AllowCredentials {
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
+	cors.logf("  Actual response added headers: %v", headers)
+}
 
+// convenience method. checks if debugging is turned on before printing
+func (cors *Cors) logf(format string, a ...interface{}) {
 	if cors.options.Debug {
-		cors.options.log.Printf("  Actual response added headers: %v", headers)
+		cors.options.log.Printf(format, a...)
 	}
 }
 
