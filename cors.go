@@ -83,6 +83,10 @@ func New(options Options) *Cors {
 		// Default is all origins
 		normOptions.AllowedOrigins = []string{"*"}
 	}
+	if len(normOptions.AllowedHeaders) == 1 {
+		// Add some sensible defaults
+		normOptions.AllowedHeaders = []string{"Origin", "Accept", "Content-Type"}
+	}
 	if len(normOptions.AllowedMethods) == 0 {
 		// Default is simple methods
 		normOptions.AllowedMethods = []string{"GET", "POST"}
