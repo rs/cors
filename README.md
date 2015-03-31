@@ -24,7 +24,7 @@ func main() {
     // cors.Default() setup the middleware with default options being
     // all origins accepted with simple methods (GET, POST). See
     // documentation below for more options.
-    handler = cors.Default().Handler(h)
+    handler := cors.Default().Handler(h)
     http.ListenAndServe(":8080", handler)
 }
 ```
