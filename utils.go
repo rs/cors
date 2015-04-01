@@ -14,10 +14,18 @@ func convert(s []string, c converter) []string {
 }
 
 // parseHeaderList tokenize + normalize a string containing a list of headers
-func parseHeaderList(headerList string) (headers []string) {
+func parseHeaderList(headerList string) []string {
 	l := len(headerList)
 	h := make([]byte, 0, l)
 	upper := true
+	// Estimate the number headers in order to allocate the right splice size
+	t := 0
+	for i := 0; i < l; i++ {
+		if headerList[i] == ',' {
+			t++
+		}
+	}
+	headers := make([]string, 0, t)
 	for i := 0; i < l; i++ {
 		b := headerList[i]
 		if b >= 'a' && b <= 'z' {

@@ -36,3 +36,17 @@ func BenchmarkParseHeaderList(b *testing.B) {
 		parseHeaderList("header, second-header, THIRD-HEADER")
 	}
 }
+
+func BenchmarkParseHeaderListSingle(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		parseHeaderList("header")
+	}
+}
+
+func BenchmarkParseHeaderListNormalized(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		parseHeaderList("Header1, Header2, Third-Header")
+	}
+}
