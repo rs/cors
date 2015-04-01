@@ -79,6 +79,15 @@ handler = c.Handler(handler)
 
 See [API documentation](http://godoc.org/github.com/rs/cors) for more info.
 
+## Benchmarks
+
+    BenchmarkWithout          20000000    64.6 ns/op    8 B/op      1 allocs/op
+    BenchmarkDefault          3000000     469 ns/op     114 B/op    2 allocs/op
+    BenchmarkAllowedOrigin    3000000     608 ns/op     114 B/op    2 allocs/op
+    BenchmarkPreflight        20000000    73.2 ns/op    0 B/op      0 allocs/op
+    BenchmarkPreflightHeader  20000000    73.6 ns/op    0 B/op      0 allocs/op
+    BenchmarkParseHeaderList  1000000     1006 ns/op    200 B/op    7 allocs/op
+
 ## Licenses
 
 All source code is licensed under the [MIT License](https://raw.github.com/rs/cors/master/LICENSE).

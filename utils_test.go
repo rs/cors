@@ -25,6 +25,9 @@ func TestParseHeaderListEmpty(t *testing.T) {
 	if len(parseHeaderList("")) != 0 {
 		t.Error("should be empty sclice")
 	}
+	if len(parseHeaderList(" , ")) != 0 {
+		t.Error("should be empty sclice")
+	}
 }
 
 func BenchmarkParseHeaderList(b *testing.B) {
