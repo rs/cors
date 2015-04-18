@@ -34,6 +34,10 @@ type Options struct {
 	// If the special "*" value is present in the list, all origins will be allowed.
 	// Default value is ["*"]
 	AllowedOrigins []string
+	// AllowOriginFunc is a custom function to validate the origin. It take the origin
+	// as argument and returns true if allowed or false otherwise. If this option is
+	// set, the content of AllowedOrigins is ignored.
+	AllowOriginFunc func(origin string) bool
 	// AllowedMethods is a list of methods the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (GET and POST)
 	AllowedMethods []string
@@ -62,6 +66,8 @@ type Cors struct {
 	allowedOriginsAll bool
 	// Normalized list of allowed origins
 	allowedOrigins []string
+	// Optional origin validator function
+	allowOriginFunc func(origin string) bool
 	// Set to true when allowed headers contains a "*"
 	allowedHeadersAll bool
 	// Normalized list of allowed headers
@@ -78,6 +84,7 @@ type Cors struct {
 func New(options Options) *Cors {
 	c := &Cors{
 		exposedHeaders:   convert(options.ExposedHeaders, http.CanonicalHeaderKey),
+		allowOriginFunc:  options.AllowOriginFunc,
 		allowCredentials: options.AllowCredentials,
 		maxAge:           options.MaxAge,
 	}
@@ -281,6 +288,9 @@ func (c *Cors) logf(format string, a ...interface{}) {
 // isOriginAllowed checks if a given origin is allowed to perform cross-domain requests
 // on the endpoint
 func (c *Cors) isOriginAllowed(origin string) bool {
+	if c.allowOriginFunc != nil {
+		return c.allowOriginFunc(origin)
+	}
 	if c.allowedOriginsAll {
 		return true
 	}

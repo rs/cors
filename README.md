@@ -71,6 +71,7 @@ handler = c.Handler(handler)
 ```
 
 * **AllowedOrigins** `[]string`: A list of origins a cross-domain request can be executed from. If the special `*` value is present in the list, all origins will be allowed. The default value is `*`.
+* **AllowOriginFunc** `func (origin string) bool`: A custom function to validate the origin. It take the origin as argument and returns true if allowed or false otherwise. If this option is set, the content of `AllowedOrigins` is ignored
 * **AllowedMethods** `[]string`: A list of methods the client is allowed to use with cross-domain requests.
 * **AllowedHeaders** `[]string`: A list of non simple headers the client is allowed to use with cross-domain requests. Default value is simple methods (`GET` and `POST`)
 * **ExposedHeaders** `[]string`: Indicates which headers are safe to expose to the API of a CORS API specification

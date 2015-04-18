@@ -3,6 +3,7 @@ package cors
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 )
 
@@ -98,6 +99,32 @@ func TestDisallowedOrigin(t *testing.T) {
 		"Access-Control-Allow-Credentials": "",
 		"Access-Control-Max-Age":           "",
 		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestAllowedOriginFunc(t *testing.T) {
+	r, _ := regexp.Compile("^http://foo")
+	s := New(Options{
+		AllowOriginFunc: func(o string) bool {
+			println(r.MatchString(o))
+			return r.MatchString(o)
+		},
+	})
+
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	res := httptest.NewRecorder()
+	req.Header.Set("Origin", "http://foobar.com")
+	s.Handler(testHandler).ServeHTTP(res, req)
+	assertHeaders(t, res.Header(), map[string]string{
+		"Access-Control-Allow-Origin": "http://foobar.com",
+	})
+
+	res = httptest.NewRecorder()
+	req.Header.Set("Origin", "http://barfoo.com")
+	s.Handler(testHandler).ServeHTTP(res, req)
+	assertHeaders(t, res.Header(), map[string]string{
+		"Access-Control-Allow-Origin": "",
 	})
 }
 
