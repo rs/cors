@@ -86,7 +86,6 @@ See [API documentation](http://godoc.org/github.com/rs/cors) for more info.
     BenchmarkAllowedOrigin    3000000      608 ns/op    114 B/op    2 allocs/op
     BenchmarkPreflight        20000000    73.2 ns/op      0 B/op    0 allocs/op
     BenchmarkPreflightHeader  20000000    73.6 ns/op      0 B/op    0 allocs/op
-    BenchmarkParseHeaderList  1000000     1006 ns/op    200 B/op    7 allocs/op
     BenchmarkParseHeaderList  2000000      847 ns/op    184 B/op    6 allocs/op
     BenchmarkParse…Single     5000000      290 ns/op     32 B/op    3 allocs/op
     BenchmarkParse…Normalized 2000000      776 ns/op    160 B/op    6 allocs/op
