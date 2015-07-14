@@ -198,6 +198,8 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: %s!=OPTIONS", r.Method)
 		return
 	}
+	// Always set Vary, see https://github.com/rs/cors/issues/10
+	headers.Add("Vary", "Origin")
 	if origin == "" {
 		c.logf("  Preflight aborted: empty origin")
 		return
@@ -218,7 +220,6 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
-	headers.Add("Vary", "Origin")
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
 	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
@@ -246,6 +247,8 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Actual request no headers added: method == %s", r.Method)
 		return
 	}
+	// Always set Vary, see https://github.com/rs/cors/issues/10
+	headers.Add("Vary", "Origin")
 	if origin == "" {
 		c.logf("  Actual request no headers added: missing origin")
 		return
@@ -268,7 +271,6 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	headers.Set("Access-Control-Allow-Origin", origin)
-	headers.Add("Vary", "Origin")
 	if len(c.exposedHeaders) > 0 {
 		headers.Set("Access-Control-Expose-Headers", strings.Join(c.exposedHeaders, ", "))
 	}

@@ -106,7 +106,6 @@ func TestAllowedOriginFunc(t *testing.T) {
 	r, _ := regexp.Compile("^http://foo")
 	s := New(Options{
 		AllowOriginFunc: func(o string) bool {
-			println(r.MatchString(o))
 			return r.MatchString(o)
 		},
 	})
