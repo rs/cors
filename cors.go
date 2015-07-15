@@ -59,6 +59,7 @@ type Options struct {
 	Debug bool
 }
 
+// Cors http handler
 type Cors struct {
 	// Debug logger
 	log *log.Logger
@@ -162,7 +163,7 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 	})
 }
 
-// Martini compatible handler
+// HandlerFunc provides Martini compatible handler
 func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		c.logf("HandlerFunc: Preflight request")
