@@ -32,6 +32,9 @@ import (
 type Options struct {
 	// AllowedOrigins is a list of origins a cross-domain request can be executed from.
 	// If the special "*" value is present in the list, all origins will be allowed.
+	// An origin may contain a wildcard (*) to replace 0 or more characters
+	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penality.
+	// Only one wildcard can be used per origin.
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowOriginFunc is a custom function to validate the origin. It take the origin
@@ -65,8 +68,10 @@ type Cors struct {
 	log *log.Logger
 	// Set to true when allowed origins contains a "*"
 	allowedOriginsAll bool
-	// Normalized list of allowed origins
+	// Normalized list of plain allowed origins
 	allowedOrigins []string
+	// List of allowed origins containing wildcards
+	allowedWOrigins []wildcard
 	// Optional origin validator function
 	allowOriginFunc func(origin string) bool
 	// Set to true when allowed headers contains a "*"
@@ -102,12 +107,23 @@ func New(options Options) *Cors {
 		// Default is all origins
 		c.allowedOriginsAll = true
 	} else {
-		c.allowedOrigins = convert(options.AllowedOrigins, strings.ToLower)
-		for _, o := range c.allowedOrigins {
-			if o == "*" {
+		c.allowedOrigins = []string{}
+		c.allowedWOrigins = []wildcard{}
+		for _, origin := range options.AllowedOrigins {
+			// Normalize
+			origin = strings.ToLower(origin)
+			if origin == "*" {
+				// If "*" is present in the list, turn the whole list into a match all
 				c.allowedOriginsAll = true
 				c.allowedOrigins = nil
+				c.allowedWOrigins = nil
 				break
+			} else if i := strings.IndexByte(origin, '*'); i >= 0 {
+				// Split the origin in two: start and end string without the *
+				w := wildcard{origin[0:i], origin[i+1 : len(origin)]}
+				c.allowedWOrigins = append(c.allowedWOrigins, w)
+			} else {
+				c.allowedOrigins = append(c.allowedOrigins, origin)
 			}
 		}
 	}
@@ -300,6 +316,11 @@ func (c *Cors) isOriginAllowed(origin string) bool {
 	origin = strings.ToLower(origin)
 	for _, o := range c.allowedOrigins {
 		if o == origin {
+			return true
+		}
+	}
+	for _, w := range c.allowedWOrigins {
+		if w.match(origin) {
 			return true
 		}
 	}

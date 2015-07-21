@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func TestWildcard(t *testing.T) {
+	w := wildcard{"foo", "bar"}
+	if !w.match("foobar") {
+		t.Error("foo*bar should match foobar")
+	}
+	if !w.match("foobazbar") {
+		t.Error("foo*bar should match foobazbar")
+	}
+	if w.match("foobaz") {
+		t.Error("foo*bar should not match foobaz")
+	}
+
+	w = wildcard{"foo", "oof"}
+	if w.match("foof") {
+		t.Error("foo*oof should not match foof")
+	}
+}
+
 func TestConvert(t *testing.T) {
 	s := convert([]string{"A", "b", "C"}, strings.ToLower)
 	e := []string{"a", "b", "c"}
