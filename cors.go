@@ -215,8 +215,13 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: %s!=OPTIONS", r.Method)
 		return
 	}
-	// Always set Vary, see https://github.com/rs/cors/issues/10
+	// Always set Vary headers
+	// see https://github.com/rs/cors/issues/10,
+	//     https://github.com/rs/cors/commit/dbdca4d95feaa7511a46e6f1efb3b3aa505bc43f#commitcomment-12352001
 	headers.Add("Vary", "Origin")
+	headers.Add("Vary", "Access-Control-Request-Method")
+	headers.Add("Vary", "Access-Control-Request-Headers")
+
 	if origin == "" {
 		c.logf("  Preflight aborted: empty origin")
 		return
