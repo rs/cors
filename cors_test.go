@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -13,8 +14,8 @@ var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 
 func assertHeaders(t *testing.T, resHeaders http.Header, reqHeaders map[string]string) {
 	for name, value := range reqHeaders {
-		if resHeaders.Get(name) != value {
-			t.Errorf("Invalid header `%s', wanted `%s', got `%s'", name, value, resHeaders.Get(name))
+		if actual := strings.Join(resHeaders[name], ", "); actual != value {
+			t.Errorf("Invalid header `%s', wanted `%s', got `%s'", name, value, actual)
 		}
 	}
 }
@@ -30,6 +31,7 @@ func TestNoConfig(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -51,6 +53,7 @@ func TestMatchAllOrigin(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -72,6 +75,7 @@ func TestAllowedOrigin(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -93,6 +97,7 @@ func TestWildcardOrigin(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "http://foo.bar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -114,6 +119,7 @@ func TestDisallowedOrigin(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -135,6 +141,7 @@ func TestDisallowedWildcardOrigin(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -183,6 +190,7 @@ func TestAllowedMethod(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "PUT",
 		"Access-Control-Allow-Headers":     "",
@@ -206,6 +214,7 @@ func TestDisallowedMethod(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -230,6 +239,7 @@ func TestAllowedHeader(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET",
 		"Access-Control-Allow-Headers":     "X-Header-2, X-Header-1",
@@ -254,6 +264,7 @@ func TestAllowedWildcardHeader(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET",
 		"Access-Control-Allow-Headers":     "X-Header-2, X-Header-1",
@@ -278,6 +289,7 @@ func TestDisallowedHeader(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -301,6 +313,7 @@ func TestOriginHeader(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET",
 		"Access-Control-Allow-Headers":     "Origin",
@@ -323,6 +336,7 @@ func TestExposedHeader(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "",
 		"Access-Control-Allow-Headers":     "",
@@ -346,6 +360,7 @@ func TestAllowedCredentials(t *testing.T) {
 	s.Handler(testHandler).ServeHTTP(res, req)
 
 	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 		"Access-Control-Allow-Origin":      "http://foobar.com",
 		"Access-Control-Allow-Methods":     "GET",
 		"Access-Control-Allow-Headers":     "",
