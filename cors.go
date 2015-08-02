@@ -58,6 +58,9 @@ type Options struct {
 	// MaxAge indicates how long (in seconds) the results of a preflight request
 	// can be cached
 	MaxAge int
+	// OptionsPassthrough instructs preflight to let other potential next handlers to
+	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
+	OptionsPassthrough bool
 	// Debugging flag adds additional output to debug server side CORS issues
 	Debug bool
 }
@@ -81,18 +84,20 @@ type Cors struct {
 	// Normalized list of allowed methods
 	allowedMethods []string
 	// Normalized list of exposed headers
-	exposedHeaders   []string
-	allowCredentials bool
-	maxAge           int
+	exposedHeaders    []string
+	allowCredentials  bool
+	maxAge            int
+	optionPassthrough bool
 }
 
 // New creates a new Cors handler with the provided options.
 func New(options Options) *Cors {
 	c := &Cors{
-		exposedHeaders:   convert(options.ExposedHeaders, http.CanonicalHeaderKey),
-		allowOriginFunc:  options.AllowOriginFunc,
-		allowCredentials: options.AllowCredentials,
-		maxAge:           options.MaxAge,
+		exposedHeaders:    convert(options.ExposedHeaders, http.CanonicalHeaderKey),
+		allowOriginFunc:   options.AllowOriginFunc,
+		allowCredentials:  options.AllowCredentials,
+		maxAge:            options.MaxAge,
+		optionPassthrough: options.OptionsPassthrough,
 	}
 	if options.Debug {
 		c.log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
@@ -171,6 +176,9 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 			// middleware may not handle OPTIONS requests correctly. One typical example
 			// is authentication middleware ; OPTIONS requests won't carry authentication
 			// headers (see #1)
+			if c.optionPassthrough {
+				h.ServeHTTP(w, r)
+			}
 		} else {
 			c.logf("Handler: Actual request")
 			c.handleActualRequest(w, r)
@@ -199,6 +207,9 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 		// middleware may not handle OPTIONS requests correctly. One typical example
 		// is authentication middleware ; OPTIONS requests won't carry authentication
 		// headers (see #1)
+		if c.optionPassthrough {
+			next(w, r)
+		}
 	} else {
 		c.logf("ServeHTTP: Actual request")
 		c.handleActualRequest(w, r)
