@@ -68,7 +68,7 @@ type Options struct {
 // Cors http handler
 type Cors struct {
 	// Debug logger
-	log *log.Logger
+	Log *log.Logger
 	// Set to true when allowed origins contains a "*"
 	allowedOriginsAll bool
 	// Normalized list of plain allowed origins
@@ -100,7 +100,7 @@ func New(options Options) *Cors {
 		optionPassthrough: options.OptionsPassthrough,
 	}
 	if options.Debug {
-		c.log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
+		c.Log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
 	}
 
 	// Normalize options
@@ -296,10 +296,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	// spec doesn't instruct to check the allowed methods for simple cross-origin requests.
 	// We think it's a nice feature to be able to have control on those methods though.
 	if !c.isMethodAllowed(r.Method) {
-		if c.log != nil {
-			c.logf("  Actual request no headers added: method '%s' not allowed",
-				r.Method)
-		}
+		c.logf("  Actual request no headers added: method '%s' not allowed", r.Method)
 
 		return
 	}
@@ -315,8 +312,8 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 
 // convenience method. checks if debugging is turned on before printing
 func (c *Cors) logf(format string, a ...interface{}) {
-	if c.log != nil {
-		c.log.Printf(format, a...)
+	if c.Log != nil {
+		c.Log.Printf(format, a...)
 	}
 }
 
