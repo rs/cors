@@ -62,13 +62,15 @@ type Options struct {
 	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
 	OptionsPassthrough bool
 	// Debugging flag adds additional output to debug server side CORS issues
-	Debug bool
+	Debug       bool
+	DebugOutput func(format string, a ...interface{})
 }
 
 // Cors http handler
 type Cors struct {
 	// Debug logger
-	log *log.Logger
+	log       *log.Logger
+	logOutput func(format string, a ...interface{})
 	// Set to true when allowed origins contains a "*"
 	allowedOriginsAll bool
 	// Normalized list of plain allowed origins
@@ -100,7 +102,11 @@ func New(options Options) *Cors {
 		optionPassthrough: options.OptionsPassthrough,
 	}
 	if options.Debug {
-		c.log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
+		if options.DebugOutput != nil {
+			c.logOutput = options.DebugOutput
+		} else {
+			c.log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
+		}
 	}
 
 	// Normalize options
@@ -315,7 +321,9 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 
 // convenience method. checks if debugging is turned on before printing
 func (c *Cors) logf(format string, a ...interface{}) {
-	if c.log != nil {
+	if c.logOutput != nil {
+		c.logOutput(format, a...)
+	} else if c.log != nil {
 		c.log.Printf(format, a...)
 	}
 }
