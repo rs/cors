@@ -20,6 +20,26 @@ func assertHeaders(t *testing.T, resHeaders http.Header, reqHeaders map[string]s
 	}
 }
 
+func TestDebugOutput(t *testing.T) {
+	receivedLog := false
+	log := func(format string, a ...interface{}) {
+		receivedLog = (format != "")
+	}
+	s := New(Options{
+		Debug:       true,
+		DebugOutput: log,
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	if !receivedLog {
+		t.Error("Invalid log output")
+	}
+}
+
 func TestNoConfig(t *testing.T) {
 	s := New(Options{
 	// Intentionally left blank.
