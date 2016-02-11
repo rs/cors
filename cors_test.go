@@ -176,6 +176,30 @@ func TestAllowedOriginFunc(t *testing.T) {
 	})
 }
 
+func TestMaxAge(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://example.com/"},
+		AllowedMethods: []string{"GET"},
+		MaxAge:         10,
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+	req.Header.Add("Access-Control-Request-Method", "GET")
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "http://example.com/",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "10",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
 func TestAllowedMethod(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foobar.com"},
@@ -368,4 +392,297 @@ func TestAllowedCredentials(t *testing.T) {
 		"Access-Control-Max-Age":           "",
 		"Access-Control-Expose-Headers":    "",
 	})
+}
+
+func TestDebug(t *testing.T) {
+	s := New(Options{
+		Debug: true,
+	})
+
+	if s.logf == nil {
+		t.Error("Logger not created when debug=true")
+	}
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestOptionsPassthrough(t *testing.T) {
+	s := New(Options{
+		OptionsPassthrough: true,
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+
+}
+
+func TestDefault(t *testing.T) {
+	s := Default()
+	if s.Log != nil {
+		t.Error("c.log should be nil when Default")
+	}
+	if !s.allowedOriginsAll {
+		t.Error("c.allowedOriginsAll should be true when Default")
+	}
+	if s.allowedHeaders == nil {
+		t.Error("c.allowedHeaders should be nil when Default")
+	}
+	if s.allowedMethods == nil {
+		t.Error("c.allowedMethods should be nil when Default")
+	}
+}
+
+func TestHandlerFunc(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	s.HandlerFunc(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandlerFuncPreflight(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+
+	s.HandlerFunc(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+
+}
+
+func TestNegroniHandler(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	s.ServeHTTP(res, req, testHandler)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestNegroniHandlerPreflight(t *testing.T) {
+	s := New(Options{
+		OptionsPassthrough: true,
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+
+	s.ServeHTTP(res, req, testHandler)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandlePreflightInvlaidOriginAbortion(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+
+	s.handlePreflight(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandlePreflightNoOptionsAbortion(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+
+	s.handlePreflight(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandleActualRequestAbortsOptionsMethod(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandleActualRequestInvlaidOriginAbortion(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandleActualRequestAllowsCredentials(t *testing.T) {
+	s := New(Options{
+		AllowCredentials: true,
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "http://example.com/",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "true",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestHandleActualRequestInvlaidMethodAbortion(t *testing.T) {
+	s := New(Options{
+		AllowedMethods:   []string{"POST"},
+		AllowCredentials: true,
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com/")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+}
+
+func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+	s.allowedMethods = []string{}
+	if s.isMethodAllowed("") {
+		t.Error("IsMethodAllowed should return false when c.allowedMethods is nil.")
+	}
+}
+
+func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
+	s := New(Options{
+	// Intentionally left blank.
+	})
+	if !s.isMethodAllowed("OPTIONS") {
+		t.Error("IsMethodAllowed should return true when c.allowedMethods is nil.")
+	}
 }
