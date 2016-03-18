@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/rs/xhandler"
 	"golang.org/x/net/context"
 )
@@ -188,6 +189,26 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 		}
 	})
+}
+
+func (c *Cors) Gin() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if ctx.Request.Method == "OPTIONS" {
+			c.logf("Handler: Preflight request")
+			c.handlePreflight(ctx.Writer, ctx.Request)
+			// Preflight requests are standalone and should stop the chain as some other
+			// middleware may not handle OPTIONS requests correctly. One typical example
+			// is authentication middleware ; OPTIONS requests won't carry authentication
+			// headers (see #1)
+			if c.optionPassthrough {
+				ctx.Next()
+			}
+		} else {
+			c.logf("Handler: Actual request")
+			c.handleActualRequest(ctx.Writer, ctx.Request)
+			ctx.Next()
+		}
+	}
 }
 
 // HandlerC is net/context aware handler
