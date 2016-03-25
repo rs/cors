@@ -202,6 +202,8 @@ func (c *Cors) Gin() gin.HandlerFunc {
 			// headers (see #1)
 			if c.optionPassthrough {
 				ctx.Next()
+			} else {
+				ctx.AbortWithStatus(http.StatusOK)
 			}
 		} else {
 			c.logf("Handler: Actual request")
