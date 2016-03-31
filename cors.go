@@ -203,7 +203,8 @@ func (c *Cors) Gin() gin.HandlerFunc {
 			if c.optionPassthrough {
 				ctx.Next()
 			} else {
-				ctx.AbortWithStatus(http.StatusOK)
+				// we need to abort, not just return from middleware
+				ctx.AbortWithStatus(http.StatusNoContent)
 			}
 		} else {
 			c.logf("Handler: Actual request")
