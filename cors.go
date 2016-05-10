@@ -183,7 +183,7 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 				h.ServeHTTP(w, r)
 			}
 			else {
- +			w.Write(http.StatusOK)
+ +			w.WriteHeader(http.StatusOK)
  +			}
 		} else {
 			c.logf("Handler: Actual request")
@@ -238,7 +238,7 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 			next(w, r)
 		}
 		else {
-			w.Write(http.StatusOK)
+			w.WriteHeader(http.StatusOK)
 		}
 	} else {
 		c.logf("ServeHTTP: Actual request")
