@@ -234,6 +234,9 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 		if c.optionPassthrough {
 			next(w, r)
 		}
+		else {
+			w.Write(http.StatusOK)
+		}
 	} else {
 		c.logf("ServeHTTP: Actual request")
 		c.handleActualRequest(w, r)
