@@ -181,8 +181,7 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 			// headers (see #1)
 			if c.optionPassthrough {
 				h.ServeHTTP(w, r)
-			}
-			else {
+			} else {
  +			w.WriteHeader(http.StatusOK)
  +			}
 		} else {
@@ -236,8 +235,7 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 		// headers (see #1)
 		if c.optionPassthrough {
 			next(w, r)
-		}
-		else {
+		} else {
 			w.WriteHeader(http.StatusOK)
 		}
 	} else {
