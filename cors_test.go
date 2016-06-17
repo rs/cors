@@ -20,6 +20,12 @@ func assertHeaders(t *testing.T, resHeaders http.Header, reqHeaders map[string]s
 	}
 }
 
+func assertResponse(t *testing.T, res *httptest.ResponseRecorder, responseCode int) {
+	if responseCode != res.Code {
+		t.Errorf("assertResponse: expected response code to be %d but got %d. ", responseCode, res.Code)
+	}
+}
+
 func TestNoConfig(t *testing.T) {
 	s := New(Options{
 	// Intentionally left blank.
@@ -438,6 +444,32 @@ func TestOptionsPassthrough(t *testing.T) {
 		"Access-Control-Max-Age":           "",
 		"Access-Control-Expose-Headers":    "",
 	})
+
+}
+
+func TestDisableOptionsPassthrough(t *testing.T) {
+	s := New(Options{
+		OptionsPassthrough: true,
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), map[string]string{
+		"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+		"Access-Control-Allow-Origin":      "",
+		"Access-Control-Allow-Methods":     "",
+		"Access-Control-Allow-Headers":     "",
+		"Access-Control-Allow-Credentials": "",
+		"Access-Control-Max-Age":           "",
+		"Access-Control-Expose-Headers":    "",
+	})
+
+	s.Handler(testHandler).ServeHTTP(res, req)
+
+	assertResponse(t, res, 200)
 
 }
 
