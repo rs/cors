@@ -33,7 +33,7 @@ type Options struct {
 	// AllowedOrigins is a list of origins a cross-domain request can be executed from.
 	// If the special "*" value is present in the list, all origins will be allowed.
 	// An origin may contain a wildcard (*) to replace 0 or more characters
-	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penality.
+	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penalty.
 	// Only one wildcard can be used per origin.
 	// Default value is ["*"]
 	AllowedOrigins []string
@@ -160,9 +160,20 @@ func New(options Options) *Cors {
 	return c
 }
 
-// Default creates a new Cors handler with default options
+// Default creates a new Cors handler with default options.
 func Default() *Cors {
 	return New(Options{})
+}
+
+// AllowAll create a new Cors handler with permissive configuration allowing all
+// origins with all standard methods with any header and credentials.
+func AllowAll() *Cors {
+	return New(Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
 }
 
 // Handler apply the CORS specification on the request, and add relevant CORS headers
