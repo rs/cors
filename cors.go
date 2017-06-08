@@ -109,8 +109,10 @@ func New(options Options) *Cors {
 
 	// Allowed Origins
 	if len(options.AllowedOrigins) == 0 {
-		// Default is all origins
-		c.allowedOriginsAll = true
+		if options.AllowOriginFunc == nil {
+			// Default is all origins
+			c.allowedOriginsAll = true
+		}
 	} else {
 		c.allowedOrigins = []string{}
 		c.allowedWOrigins = []wildcard{}
@@ -267,7 +269,11 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
 		return
 	}
-	headers.Set("Access-Control-Allow-Origin", origin)
+	if c.allowedOriginsAll && !c.allowCredentials {
+		headers.Set("Access-Control-Allow-Origin", "*")
+	} else {
+		headers.Set("Access-Control-Allow-Origin", origin)
+	}
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
 	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
@@ -315,7 +321,11 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	headers.Set("Access-Control-Allow-Origin", origin)
+	if c.allowedOriginsAll && !c.allowCredentials {
+		headers.Set("Access-Control-Allow-Origin", "*")
+	} else {
+		headers.Set("Access-Control-Allow-Origin", origin)
+	}
 	if len(c.exposedHeaders) > 0 {
 		headers.Set("Access-Control-Expose-Headers", strings.Join(c.exposedHeaders, ", "))
 	}
