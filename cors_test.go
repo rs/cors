@@ -345,6 +345,15 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 			},
 		},
+		{
+			"NonPreflightOptions",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			map[string]string{},
+			map[string]string{},
+		},
 	}
 	for i := range cases {
 		tc := cases[i]
