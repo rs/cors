@@ -42,7 +42,7 @@ type Options struct {
 	// set, the content of AllowedOrigins is ignored.
 	AllowOriginFunc func(origin string) bool
 	// AllowedMethods is a list of methods the client is allowed to use with
-	// cross-domain requests. Default value is simple methods (GET and POST)
+	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
 	AllowedMethods []string
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests.
@@ -154,7 +154,7 @@ func New(options Options) *Cors {
 	// Allowed Methods
 	if len(options.AllowedMethods) == 0 {
 		// Default is spec's "simple" methods
-		c.allowedMethods = []string{"GET", "POST"}
+		c.allowedMethods = []string{"GET", "POST", "HEAD"}
 	} else {
 		c.allowedMethods = convert(options.AllowedMethods, strings.ToUpper)
 	}
