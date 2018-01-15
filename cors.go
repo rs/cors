@@ -38,9 +38,10 @@ type Options struct {
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowOriginFunc is a custom function to validate the origin. It take the origin
-	// as argument and returns true if allowed or false otherwise. If this option is
+	// and the request as arguments and returns true if allowed or false otherwise. If this option is
 	// set, the content of AllowedOrigins is ignored.
-	AllowOriginFunc func(origin string) bool
+	AllowOriginFunc func(origin string, r *http.Request) bool
+
 	// AllowedMethods is a list of methods the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
 	AllowedMethods []string
@@ -76,7 +77,7 @@ type Cors struct {
 	// List of allowed origins containing wildcards
 	allowedWOrigins []wildcard
 	// Optional origin validator function
-	allowOriginFunc func(origin string) bool
+	allowOriginFunc func(origin string, r *http.Request) bool
 	// Set to true when allowed headers contains a "*"
 	allowedHeadersAll bool
 	// Normalized list of allowed headers
@@ -254,7 +255,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: empty origin")
 		return
 	}
-	if !c.isOriginAllowed(origin) {
+	if !c.isOriginAllowed(origin, r) {
 		c.logf("  Preflight aborted: origin '%s' not allowed", origin)
 		return
 	}
@@ -307,7 +308,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Actual request no headers added: missing origin")
 		return
 	}
-	if !c.isOriginAllowed(origin) {
+	if !c.isOriginAllowed(origin, r) {
 		c.logf("  Actual request no headers added: origin '%s' not allowed", origin)
 		return
 	}
@@ -344,9 +345,9 @@ func (c *Cors) logf(format string, a ...interface{}) {
 
 // isOriginAllowed checks if a given origin is allowed to perform cross-domain requests
 // on the endpoint
-func (c *Cors) isOriginAllowed(origin string) bool {
+func (c *Cors) isOriginAllowed(origin string, r *http.Request) bool {
 	if c.allowOriginFunc != nil {
-		return c.allowOriginFunc(origin)
+		return c.allowOriginFunc(origin, r)
 	}
 	if c.allowedOriginsAll {
 		return true
