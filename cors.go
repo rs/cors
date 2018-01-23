@@ -182,7 +182,7 @@ func AllowAll() *Cors {
 // as necessary.
 func (c *Cors) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
+		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			c.logf("Handler: Preflight request")
 			c.handlePreflight(w, r)
 			// Preflight requests are standalone and should stop the chain as some other
@@ -204,7 +204,7 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 
 // HandlerFunc provides Martini compatible handler
 func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
+	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 		c.logf("HandlerFunc: Preflight request")
 		c.handlePreflight(w, r)
 	} else {
@@ -215,7 +215,7 @@ func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 // Negroni compatible interface
 func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
+	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 		c.logf("ServeHTTP: Preflight request")
 		c.handlePreflight(w, r)
 		// Preflight requests are standalone and should stop the chain as some other
@@ -239,7 +239,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	headers := w.Header()
 	origin := r.Header.Get("Origin")
 
-	if r.Method != "OPTIONS" {
+	if r.Method != http.MethodOptions {
 		c.logf("  Preflight aborted: %s!=OPTIONS", r.Method)
 		return
 	}
@@ -297,7 +297,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	headers := w.Header()
 	origin := r.Header.Get("Origin")
 
-	if r.Method == "OPTIONS" {
+	if r.Method == http.MethodOptions {
 		c.logf("  Actual request no headers added: method == %s", r.Method)
 		return
 	}
@@ -373,7 +373,7 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		return false
 	}
 	method = strings.ToUpper(method)
-	if method == "OPTIONS" {
+	if method == http.MethodOptions {
 		// Always allow preflight requests
 		return true
 	}
