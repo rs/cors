@@ -52,12 +52,12 @@ type Options struct {
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
 	ExposedHeaders []string
-	// AllowCredentials indicates whether the request can include user credentials like
-	// cookies, HTTP authentication or client side SSL certificates.
-	AllowCredentials bool
 	// MaxAge indicates how long (in seconds) the results of a preflight request
 	// can be cached
 	MaxAge int
+	// AllowCredentials indicates whether the request can include user credentials like
+	// cookies, HTTP authentication or client side SSL certificates.
+	AllowCredentials bool
 	// OptionsPassthrough instructs preflight to let other potential next handlers to
 	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
 	OptionsPassthrough bool
@@ -69,24 +69,24 @@ type Options struct {
 type Cors struct {
 	// Debug logger
 	Log *log.Logger
-	// Set to true when allowed origins contains a "*"
-	allowedOriginsAll bool
 	// Normalized list of plain allowed origins
 	allowedOrigins []string
 	// List of allowed origins containing wildcards
 	allowedWOrigins []wildcard
 	// Optional origin validator function
 	allowOriginFunc func(origin string) bool
-	// Set to true when allowed headers contains a "*"
-	allowedHeadersAll bool
 	// Normalized list of allowed headers
 	allowedHeaders []string
 	// Normalized list of allowed methods
 	allowedMethods []string
 	// Normalized list of exposed headers
-	exposedHeaders    []string
+	exposedHeaders []string
+	maxAge         int
+	// Set to true when allowed origins contains a "*"
+	allowedOriginsAll bool
+	// Set to true when allowed headers contains a "*"
+	allowedHeadersAll bool
 	allowCredentials  bool
-	maxAge            int
 	optionPassthrough bool
 }
 
@@ -127,7 +127,7 @@ func New(options Options) *Cors {
 				break
 			} else if i := strings.IndexByte(origin, '*'); i >= 0 {
 				// Split the origin in two: start and end string without the *
-				w := wildcard{origin[0:i], origin[i+1 : len(origin)]}
+				w := wildcard{origin[0:i], origin[i+1:]}
 				c.allowedWOrigins = append(c.allowedWOrigins, w)
 			} else {
 				c.allowedOrigins = append(c.allowedOrigins, origin)
