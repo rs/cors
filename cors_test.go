@@ -243,6 +243,25 @@ func TestSpec(t *testing.T) {
 			},
 		},
 		{
+			"DefaultAllowedHeaders",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+				AllowedHeaders: []string{},
+			},
+			"OPTIONS",
+			map[string]string{
+				"Origin":                         "http://foobar.com",
+				"Access-Control-Request-Method":  "GET",
+				"Access-Control-Request-Headers": "X-Requested-With",
+			},
+			map[string]string{
+				"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+				"Access-Control-Allow-Origin":  "http://foobar.com",
+				"Access-Control-Allow-Methods": "GET",
+				"Access-Control-Allow-Headers": "X-Requested-With",
+			},
+		},
+		{
 			"AllowedWildcardHeader",
 			Options{
 				AllowedOrigins: []string{"http://foobar.com"},
