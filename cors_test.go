@@ -49,7 +49,7 @@ func TestSpec(t *testing.T) {
 		{
 			"NoConfig",
 			Options{
-			// Intentionally left blank.
+				// Intentionally left blank.
 			},
 			"GET",
 			map[string]string{},
@@ -430,7 +430,7 @@ func TestDefault(t *testing.T) {
 	}
 }
 
-func TestHandlePreflightInvlaidOriginAbortion(t *testing.T) {
+func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foo.com"},
 	})
@@ -447,7 +447,7 @@ func TestHandlePreflightInvlaidOriginAbortion(t *testing.T) {
 
 func TestHandlePreflightNoOptionsAbortion(t *testing.T) {
 	s := New(Options{
-	// Intentionally left blank.
+		// Intentionally left blank.
 	})
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
@@ -470,7 +470,7 @@ func TestHandleActualRequestAbortsOptionsMethod(t *testing.T) {
 	assertHeaders(t, res.Header(), map[string]string{})
 }
 
-func TestHandleActualRequestInvlaidOriginAbortion(t *testing.T) {
+func TestHandleActualRequestInvalidOriginAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foo.com"},
 	})
@@ -485,7 +485,7 @@ func TestHandleActualRequestInvlaidOriginAbortion(t *testing.T) {
 	})
 }
 
-func TestHandleActualRequestInvlaidMethodAbortion(t *testing.T) {
+func TestHandleActualRequestInvalidMethodAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedMethods:   []string{"POST"},
 		AllowCredentials: true,
@@ -503,7 +503,7 @@ func TestHandleActualRequestInvlaidMethodAbortion(t *testing.T) {
 
 func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
 	s := New(Options{
-	// Intentionally left blank.
+		// Intentionally left blank.
 	})
 	s.allowedMethods = []string{}
 	if s.isMethodAllowed("") {
@@ -513,7 +513,7 @@ func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
 
 func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
 	s := New(Options{
-	// Intentionally left blank.
+		// Intentionally left blank.
 	})
 	if !s.isMethodAllowed("OPTIONS") {
 		t.Error("IsMethodAllowed should return true when c.allowedMethods is nil.")
