@@ -87,9 +87,7 @@ type Cors struct {
 	// Set to true when allowed headers contains a "*"
 	allowedHeadersAll bool
 	allowCredentials  bool
-	// OptionsPassthrough indicates if preflight lets other potential next
-	// handlers to process the OPTIONS method.
-	OptionPassthrough bool
+	optionPassthrough bool
 }
 
 // New creates a new Cors handler with the provided options.
@@ -99,7 +97,7 @@ func New(options Options) *Cors {
 		allowOriginFunc:   options.AllowOriginFunc,
 		allowCredentials:  options.AllowCredentials,
 		maxAge:            options.MaxAge,
-		OptionPassthrough: options.OptionsPassthrough,
+		optionPassthrough: options.OptionsPassthrough,
 	}
 	if options.Debug {
 		c.Log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
@@ -191,7 +189,7 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 			// middleware may not handle OPTIONS requests correctly. One typical example
 			// is authentication middleware ; OPTIONS requests won't carry authentication
 			// headers (see #1)
-			if c.OptionPassthrough {
+			if c.optionPassthrough {
 				h.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(http.StatusOK)
@@ -224,7 +222,7 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 		// middleware may not handle OPTIONS requests correctly. One typical example
 		// is authentication middleware ; OPTIONS requests won't carry authentication
 		// headers (see #1)
-		if c.OptionPassthrough {
+		if c.optionPassthrough {
 			next(w, r)
 		} else {
 			w.WriteHeader(http.StatusOK)
