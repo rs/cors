@@ -57,7 +57,7 @@ func TestCorsWrapper_buildAbortsWhenPreflight(t *testing.T) {
 	}
 }
 
-func TestWrapNotAbortsWhenPassthrough(t *testing.T) {
+func TestCorsWrapper_buildNotAbortsWhenPassthrough(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
