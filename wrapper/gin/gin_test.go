@@ -34,14 +34,7 @@ func TestNewNotNil(t *testing.T) {
 	}
 }
 
-func TestWrapNotNil(t *testing.T) {
-	handler := Wrap(cors.Default())
-	if handler == nil {
-		t.Error("Should not return nil Gin handler")
-	}
-}
-
-func TestWrapAbortsWhenPreflight(t *testing.T) {
+func TestCorsWrapper_buildAbortsWhenPreflight(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
@@ -50,9 +43,9 @@ func TestWrapAbortsWhenPreflight(t *testing.T) {
 	ctx.Status(http.StatusAccepted)
 	res.Code = http.StatusAccepted
 
-	handler := Wrap(cors.New(Options{
+	handler := corsWrapper{Cors: cors.New(Options{
 		// Intentionally left blank.
-	}))
+	})}.build()
 
 	handler(ctx)
 
@@ -71,9 +64,9 @@ func TestWrapNotAbortsWhenPassthrough(t *testing.T) {
 	ctx.Request.Header.Add("Origin", "http://example.com/")
 	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
 
-	handler := Wrap(cors.New(Options{
+	handler := corsWrapper{cors.New(Options{
 		OptionsPassthrough: true,
-	}))
+	}), true}.build()
 
 	handler(ctx)
 
