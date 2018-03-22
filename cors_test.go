@@ -430,7 +430,7 @@ func TestDefault(t *testing.T) {
 	}
 }
 
-func TestHandlePreflightInvlaidOriginAbortion(t *testing.T) {
+func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foo.com"},
 	})
@@ -470,7 +470,7 @@ func TestHandleActualRequestAbortsOptionsMethod(t *testing.T) {
 	assertHeaders(t, res.Header(), map[string]string{})
 }
 
-func TestHandleActualRequestInvlaidOriginAbortion(t *testing.T) {
+func TestHandleActualRequestInvalidOriginAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foo.com"},
 	})
@@ -485,7 +485,7 @@ func TestHandleActualRequestInvlaidOriginAbortion(t *testing.T) {
 	})
 }
 
-func TestHandleActualRequestInvlaidMethodAbortion(t *testing.T) {
+func TestHandleActualRequestInvalidMethodAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedMethods:   []string{"POST"},
 		AllowCredentials: true,
