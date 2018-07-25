@@ -83,7 +83,7 @@ func TestSpec(t *testing.T) {
 			},
 			map[string]string{
 				"Vary": "Origin",
-				"Access-Control-Allow-Origin":      "http://foobar.com",
+				"Access-Control-Allow-Origin":      "*",
 				"Access-Control-Allow-Credentials": "true",
 			},
 		},
