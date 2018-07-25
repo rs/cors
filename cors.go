@@ -159,11 +159,6 @@ func New(options Options) *Cors {
 		c.allowedMethods = convert(options.AllowedMethods, strings.ToUpper)
 	}
 
-	if c.allowedOriginsAll && c.allowCredentials {
-		// See https://github.com/rs/cors/issues/55
-		log.Print("[cors] WARNING: unsafe configuration: AllowOrigin * and AllowCredientials true combined")
-	}
-
 	return c
 }
 
@@ -274,7 +269,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
 		return
 	}
-	if c.allowedOriginsAll && !c.allowCredentials {
+	if c.allowedOriginsAll {
 		headers.Set("Access-Control-Allow-Origin", "*")
 	} else {
 		headers.Set("Access-Control-Allow-Origin", origin)
@@ -326,7 +321,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	if c.allowedOriginsAll && !c.allowCredentials {
+	if c.allowedOriginsAll {
 		headers.Set("Access-Control-Allow-Origin", "*")
 	} else {
 		headers.Set("Access-Control-Allow-Origin", origin)
