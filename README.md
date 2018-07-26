@@ -68,6 +68,7 @@ Please refer to [#55](https://github.com/rs/cors/issues/55) for more information
 * [Gorilla](http://www.gorillatoolkit.org/pkg/mux): [examples/gorilla/server.go](https://github.com/rs/cors/blob/master/examples/gorilla/server.go)
 * [Buffalo](https://gobuffalo.io): [examples/buffalo/server.go](https://github.com/rs/cors/blob/master/examples/buffalo/server.go)
 * [Gin](https://gin-gonic.github.io/gin): [examples/gin/server.go](https://github.com/rs/cors/blob/master/examples/gin/server.go)
+* [Chi](https://github.com/go-chi/chi): [examples/chi/server.go](https://github.com/rs/cors/blob/master/examples/chi/server.go)
 
 ## Parameters
 
