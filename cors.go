@@ -135,6 +135,7 @@ func New(options Options) *Cors {
 		}
 	}
 
+	c = c.ExposedHeaders(options.ExposedHeaders).AllowedHeaders(options.AllowedHeaders)
 	// Allowed Methods
 	if len(options.AllowedMethods) == 0 {
 		// Default is spec's "simple" methods
