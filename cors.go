@@ -94,7 +94,6 @@ type Cors struct {
 // New creates a new Cors handler with the provided options.
 func New(options Options) *Cors {
 	c := &Cors{
-		exposedHeaders:    convert(options.ExposedHeaders, http.CanonicalHeaderKey),
 		allowOriginFunc:   options.AllowOriginFunc,
 		allowCredentials:  options.AllowCredentials,
 		maxAge:            options.MaxAge,
@@ -136,22 +135,7 @@ func New(options Options) *Cors {
 		}
 	}
 
-	// Allowed Headers
-	if len(options.AllowedHeaders) == 0 {
-		// Use sensible defaults
-		c.allowedHeaders = []string{"Origin", "Accept", "Content-Type"}
-	} else {
-		// Origin is always appended as some browsers will always request for this header at preflight
-		c.allowedHeaders = convert(append(options.AllowedHeaders, "Origin", "Accept", "Content-Type"), http.CanonicalHeaderKey)
-		for _, h := range options.AllowedHeaders {
-			if h == "*" {
-				c.allowedHeadersAll = true
-				c.allowedHeaders = nil
-				break
-			}
-		}
-	}
-
+	c = c.ExposedHeaders(options.ExposedHeaders).AllowedHeaders(options.AllowedHeaders)
 	// Allowed Methods
 	if len(options.AllowedMethods) == 0 {
 		// Default is spec's "simple" methods
@@ -177,6 +161,30 @@ func AllowAll() *Cors {
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
+}
+
+func (c *Cors) ExposedHeaders(headers []string) *Cors {
+	c.exposedHeaders = convert(headers, http.CanonicalHeaderKey)
+	return c
+}
+
+func (c *Cors) AllowedHeaders(headers []string) *Cors {
+	// Allowed Headers
+	if len(headers) == 0 {
+		// Use sensible defaults
+		c.allowedHeaders = []string{"Origin", "Accept", "Content-Type"}
+	} else {
+		// Origin is always appended as some browsers will always request for this header at preflight
+		c.allowedHeaders = convert(append(headers, "Origin", "Accept", "Content-Type"), http.CanonicalHeaderKey)
+		for _, h := range headers {
+			if h == "*" {
+				c.allowedHeadersAll = true
+				c.allowedHeaders = nil
+				break
+			}
+		}
+	}
+	return c
 }
 
 // Handler apply the CORS specification on the request, and add relevant CORS headers
