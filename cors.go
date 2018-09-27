@@ -168,6 +168,14 @@ func (c *Cors) ExposedHeaders(headers []string) *Cors {
 	return c
 }
 
+func (c *Cors) AllowedMethods(methods []string) *Cors {
+	// Allowed Methods
+	if len(methods) > 0 {
+		c.allowedMethods = append(c.allowedMethods, methods...)
+	}
+	return c
+}
+
 func (c *Cors) AllowedHeaders(headers []string) *Cors {
 	// Allowed Headers
 	if len(headers) == 0 {
