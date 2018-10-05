@@ -1,5 +1,8 @@
 module github.com/rs/cors/wrapper/gin
 
+// see comment by Russ Cox: https://github.com/golang/go/issues/27056#issuecomment-414028435
+replace github.com/rs/cors => ../../
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
@@ -13,9 +16,9 @@ require (
 	github.com/rs/cors v1.5.0
 	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/ugorji/go/codec v0.0.0-20180927125128-99ea80c8b19a // indirect
-	golang.org/x/net v0.0.0-20181003013248-f5e5bdd77824 // indirect
+	golang.org/x/net v0.0.0-20181005035420-146acd28ed58 // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	golang.org/x/sys v0.0.0-20180928133829-e4b3c5e90611 // indirect
+	golang.org/x/sys v0.0.0-20181004145325-8469e314837c // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.2.1 // indirect
