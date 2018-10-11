@@ -68,3 +68,19 @@ func BenchmarkParseHeaderListNormalized(b *testing.B) {
 		parseHeaderList("Header1, Header2, Third-Header")
 	}
 }
+
+func BenchmarkWildcard(b *testing.B) {
+	w := wildcard{"foo", "bar"}
+	b.Run("match", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			w.match("foobazbar")
+		}
+	})
+	b.Run("too short", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			w.match("fobar")
+		}
+	})
+}
