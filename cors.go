@@ -6,7 +6,7 @@ You can configure it by passing an option struct to cors.New:
 
     c := cors.New(cors.Options{
         AllowedOrigins:   []string{"foo.com"},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
+        AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
         AllowCredentials: true,
     })
 
