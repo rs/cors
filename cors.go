@@ -227,7 +227,7 @@ func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Negroni compatible interface
+// ServeHTTP: Negroni compatible interface
 func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 		c.logf("ServeHTTP: Preflight request")
