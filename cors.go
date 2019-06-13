@@ -111,7 +111,7 @@ func New(options Options) *Cors {
 		maxAge:                 options.MaxAge,
 		optionPassthrough:      options.OptionsPassthrough,
 	}
-	if options.Debug {
+	if options.Debug && c.Log == nil {
 		c.Log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
 	}
 
