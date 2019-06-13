@@ -69,10 +69,15 @@ type Options struct {
 	Debug bool
 }
 
+// Logger generic interface for logger
+type Logger interface {
+	Printf(string, ...interface{})
+}
+
 // Cors http handler
 type Cors struct {
 	// Debug logger
-	Log *log.Logger
+	Log Logger
 	// Normalized list of plain allowed origins
 	allowedOrigins []string
 	// List of allowed origins containing wildcards
@@ -349,7 +354,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	c.logf("  Actual response added headers: %v", headers)
 }
 
-// convenience method. checks if debugging is turned on before printing
+// convenience method. checks if a logger is set.
 func (c *Cors) logf(format string, a ...interface{}) {
 	if c.Log != nil {
 		c.Log.Printf(format, a...)
