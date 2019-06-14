@@ -54,7 +54,8 @@ type Options struct {
 	// Default value is [] but "Origin" is always appended to the list.
 	AllowedHeaders []string
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
-	// API specification
+	// API specification.
+	// If the special "*" value is present in the list, all headers will be allowed.
 	ExposedHeaders []string
 	// MaxAge indicates how long (in seconds) the results of a preflight request
 	// can be cached
@@ -194,6 +195,7 @@ func AllowAll() *Cors {
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: false,
+		ExposedHeaders:   []string{"*"},
 	})
 }
 
@@ -216,12 +218,15 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 		} else {
 			c.logf("Handler: Actual request")
 			c.handleActualRequest(w, r)
+			w = &ExposeAllRespWriter{w, false}
 			h.ServeHTTP(w, r)
 		}
 	})
 }
 
-// HandlerFunc provides Martini compatible handler
+// HandlerFunc provides Martini compatible handler.
+// Since a handler isn't wrapped using this func, considering using
+// ExposeAllRespWriter for wildcard support.
 func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 		c.logf("HandlerFunc: Preflight request")
@@ -249,6 +254,7 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 	} else {
 		c.logf("ServeHTTP: Actual request")
 		c.handleActualRequest(w, r)
+		w = &ExposeAllRespWriter{w, false}
 		next(w, r)
 	}
 }
@@ -426,4 +432,55 @@ func (c *Cors) areHeadersAllowed(requestedHeaders []string) bool {
 		}
 	}
 	return true
+}
+
+// ExposeAllRespWriter echos back any headers that are set in the wrapped response writer
+// to support the wildcard "*" case for Access-Control-Expose-Headers since
+// browsers do not currently have good compatibility.
+type ExposeAllRespWriter struct {
+	http.ResponseWriter
+	applied bool
+}
+
+func (w *ExposeAllRespWriter) Write(b []byte) (int, error) {
+	w.setHeaders()
+	return w.ResponseWriter.Write(b)
+}
+
+func (w *ExposeAllRespWriter) WriteHeader(c int) {
+	w.setHeaders()
+	w.ResponseWriter.WriteHeader(c)
+}
+
+func (w *ExposeAllRespWriter) setHeaders() {
+	if w.applied {
+		return
+	}
+	w.applied = true
+
+	if w.ResponseWriter.Header().Get("Access-Control-Expose-Headers") != "*" {
+		return
+	}
+
+	var toExpose []string
+	for k := range w.ResponseWriter.Header() {
+		switch k {
+		case
+			// CORs headers that could be set when Access-Control-Expose-Headers is set
+			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Access-Control-Expose-Headers",
+
+			// already allowed by spec
+			"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma":
+			continue
+		default:
+			toExpose = append(toExpose, k)
+		}
+	}
+
+	if len(toExpose) == 0 {
+		w.ResponseWriter.Header().Del("Access-Control-Expose-Headers")
+		return
+	}
+
+	w.ResponseWriter.Header().Set("Access-Control-Expose-Headers", strings.Join(toExpose, ", "))
 }
