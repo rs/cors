@@ -415,6 +415,7 @@ func (c *Cors) areHeadersAllowed(requestedHeaders []string) bool {
 		for _, h := range c.allowedHeaders {
 			if h == header {
 				found = true
+				break
 			}
 		}
 		if !found {
