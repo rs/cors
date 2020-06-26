@@ -1,6 +1,9 @@
 package cors
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 const toLower = 'a' - 'A'
 
@@ -26,46 +29,7 @@ func convert(s []string, c converter) []string {
 
 // parseHeaderList tokenize + normalize a string containing a list of headers
 func parseHeaderList(headerList string) []string {
-	l := len(headerList)
-	h := make([]byte, 0, l)
-	upper := true
-	// Estimate the number headers in order to allocate the right splice size
-	t := 0
-	for i := 0; i < l; i++ {
-		if headerList[i] == ',' {
-			t++
-		}
-	}
-	headers := make([]string, 0, t)
-	for i := 0; i < l; i++ {
-		b := headerList[i]
-		switch {
-		case b >= 'a' && b <= 'z':
-			if upper {
-				h = append(h, b-toLower)
-			} else {
-				h = append(h, b)
-			}
-		case b >= 'A' && b <= 'Z':
-			if !upper {
-				h = append(h, b+toLower)
-			} else {
-				h = append(h, b)
-			}
-		case b == '-' || b == '_' || (b >= '0' && b <= '9'):
-			h = append(h, b)
-		}
-
-		if b == ' ' || b == ',' || i == l-1 {
-			if len(h) > 0 {
-				// Flush the found header
-				headers = append(headers, string(h))
-				h = h[:0]
-				upper = true
-			}
-		} else {
-			upper = b == '-' || b == '_'
-		}
-	}
-	return headers
+	regex := regexp.MustCompile(`[()\[\]/:;<=>?@\\{}]+`)
+	headerList = regex.ReplaceAllString(headerList, "")
+	return strings.Split(headerList, ",")
 }
