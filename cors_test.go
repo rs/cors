@@ -40,11 +40,12 @@ func assertResponse(t *testing.T, res *httptest.ResponseRecorder, responseCode i
 
 func TestSpec(t *testing.T) {
 	cases := []struct {
-		name       string
-		options    Options
-		method     string
-		reqHeaders map[string]string
-		resHeaders map[string]string
+		name          string
+		options       Options
+		method        string
+		reqHeaders    map[string]string
+		resHeaders    map[string]string
+		originAllowed bool
 	}{
 		{
 			"NoConfig",
@@ -56,6 +57,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin",
 			},
+			true,
 		},
 		{
 			"MatchAllOrigin",
@@ -70,6 +72,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "*",
 			},
+			true,
 		},
 		{
 			"MatchAllOriginWithCredentials",
@@ -86,6 +89,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin":      "*",
 				"Access-Control-Allow-Credentials": "true",
 			},
+			true,
 		},
 		{
 			"AllowedOrigin",
@@ -100,6 +104,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "http://foobar.com",
 			},
+			true,
 		},
 		{
 			"WildcardOrigin",
@@ -114,6 +119,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "http://foo.bar.com",
 			},
+			true,
 		},
 		{
 			"DisallowedOrigin",
@@ -127,6 +133,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin",
 			},
+			false,
 		},
 		{
 			"DisallowedWildcardOrigin",
@@ -140,6 +147,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin",
 			},
+			false,
 		},
 		{
 			"AllowedOriginFuncMatch",
@@ -156,6 +164,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "http://foobar.com",
 			},
+			true,
 		},
 		{
 			"AllowOriginRequestFuncMatch",
@@ -173,6 +182,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "http://foobar.com",
 			},
+			true,
 		},
 		{
 			"AllowOriginRequestFuncNotMatch",
@@ -189,6 +199,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin",
 			},
+			false,
 		},
 		{
 			"MaxAge",
@@ -208,6 +219,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 				"Access-Control-Max-Age":       "10",
 			},
+			true,
 		},
 		{
 			"AllowedMethod",
@@ -225,6 +237,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin":  "http://foobar.com",
 				"Access-Control-Allow-Methods": "PUT",
 			},
+			true,
 		},
 		{
 			"DisallowedMethod",
@@ -240,6 +253,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 			},
+			true,
 		},
 		{
 			"AllowedHeaders",
@@ -259,6 +273,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 				"Access-Control-Allow-Headers": "X-Header-2, X-Header-1",
 			},
+			true,
 		},
 		{
 			"DefaultAllowedHeaders",
@@ -278,6 +293,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 				"Access-Control-Allow-Headers": "X-Requested-With",
 			},
+			true,
 		},
 		{
 			"AllowedWildcardHeader",
@@ -297,6 +313,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 				"Access-Control-Allow-Headers": "X-Header-2, X-Header-1",
 			},
+			true,
 		},
 		{
 			"DisallowedHeader",
@@ -313,6 +330,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 			},
+			true,
 		},
 		{
 			"OriginHeader",
@@ -331,6 +349,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods": "GET",
 				"Access-Control-Allow-Headers": "Origin",
 			},
+			true,
 		},
 		{
 			"ExposedHeader",
@@ -347,6 +366,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin":   "http://foobar.com",
 				"Access-Control-Expose-Headers": "X-Header-1, X-Header-2",
 			},
+			true,
 		},
 		{
 			"AllowedCredentials",
@@ -365,6 +385,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Methods":     "GET",
 				"Access-Control-Allow-Credentials": "true",
 			},
+			true,
 		},
 		{
 			"OptionPassthrough",
@@ -381,6 +402,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin":  "*",
 				"Access-Control-Allow-Methods": "GET",
 			},
+			true,
 		},
 		{
 			"NonPreflightOptions",
@@ -395,6 +417,7 @@ func TestSpec(t *testing.T) {
 				"Vary":                        "Origin",
 				"Access-Control-Allow-Origin": "http://foobar.com",
 			},
+			true,
 		},
 	}
 	for i := range cases {
@@ -406,6 +429,12 @@ func TestSpec(t *testing.T) {
 			for name, value := range tc.reqHeaders {
 				req.Header.Add(name, value)
 			}
+
+			t.Run("OriginAllowed", func(t *testing.T) {
+				if have, want := s.OriginAllowed(req), tc.originAllowed; have != want {
+					t.Errorf("OriginAllowed have: %t want: %t", have, want)
+				}
+			})
 
 			t.Run("Handler", func(t *testing.T) {
 				res := httptest.NewRecorder()
