@@ -360,9 +360,6 @@ func (c *Cors) logf(format string, a ...interface{}) {
 // check the Origin of a request. No origin at all is also allowed.
 func (c *Cors) OriginAllowed(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
-	if origin == "" {
-		return true
-	}
 	return c.isOriginAllowed(r, origin)
 }
 
