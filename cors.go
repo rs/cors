@@ -303,6 +303,9 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		headers.Set("Access-Control-Allow-Headers", strings.Join(reqHeaders, ", "))
 	}
 	if c.allowCredentials {
+		// allowCredentials  Access-Control-Allow-Origin must be request origin
+		// https://github.com/rs/cors/issues/117
+		headers.Set("Access-Control-Allow-Origin", origin)
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
 	if c.maxAge > 0 {
@@ -345,6 +348,9 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		headers.Set("Access-Control-Expose-Headers", strings.Join(c.exposedHeaders, ", "))
 	}
 	if c.allowCredentials {
+		// allowCredentials  Access-Control-Allow-Origin must be request origin
+		// https://github.com/rs/cors/issues/117
+		headers.Set("Access-Control-Allow-Origin", origin)
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
 	c.logf("  Actual response added headers: %v", headers)
