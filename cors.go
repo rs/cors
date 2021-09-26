@@ -64,6 +64,7 @@ type Options struct {
 	AllowOriginVaryRequestFunc func(r *http.Request, origin string) (bool, []string)
 	// AllowedMethods is a list of methods the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
+	// If the special "*" value is present in the list, all methods will be allowed.
 	AllowedMethods []string
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests.
@@ -128,6 +129,8 @@ type Cors struct {
 	allowedOriginsAll bool
 	// Set to true when allowed headers contains a "*"
 	allowedHeadersAll bool
+	// Set to true when allowed methods contains a "*"
+	allowedMethodsAll bool
 	// Status code to use for successful OPTIONS requests
 	optionsSuccessStatus int
 	allowCredentials     bool
@@ -239,6 +242,14 @@ func New(options Options) *Cors {
 		c.maxAge = []string{strconv.Itoa(options.MaxAge)}
 	} else if options.MaxAge < 0 {
 		c.maxAge = []string{"0"}
+		c.allowedMethods = convert(options.AllowedMethods, strings.ToUpper)
+		for _, h := range options.AllowedMethods {
+			if h == "*" {
+				c.allowedMethodsAll = true
+				c.allowedMethods = nil
+				break
+			}
+		}
 	}
 
 	return c
@@ -485,6 +496,9 @@ func (c *Cors) isOriginAllowed(r *http.Request, origin string) (allowed bool, va
 // isMethodAllowed checks if a given method can be used as part of a cross-domain request
 // on the endpoint
 func (c *Cors) isMethodAllowed(method string) bool {
+	if c.allowedMethodsAll {
+		return true
+	}
 	if len(c.allowedMethods) == 0 {
 		// If no method allowed, always return false, even for preflight request
 		return false
