@@ -95,6 +95,7 @@ handler = c.Handler(handler)
 * **AllowCredentials** `bool`: Indicates whether the request can include user credentials like cookies, HTTP authentication or client side SSL certificates. The default is `false`.
 * **MaxAge** `int`: Indicates how long (in seconds) the results of a preflight request can be cached. The default is `0` which stands for no max age.
 * **OptionsPassthrough** `bool`: Instructs preflight to let other potential next handlers to process the `OPTIONS` method. Turn this on if your application handles `OPTIONS`.
+* **OptionsSuccessStatus** `int`: Provides a status code to use for successful OPTIONS requests. Default value is `http.StatusNoContent` (`204`).
 * **Debug** `bool`: Debugging flag adds additional output to debug server side CORS issues.
 
 See [API documentation](http://godoc.org/github.com/rs/cors) for more info.

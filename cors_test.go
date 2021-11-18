@@ -558,3 +558,53 @@ func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
 		t.Error("IsMethodAllowed should return true when c.allowedMethods is nil.")
 	}
 }
+
+func TestOptionsSuccessStatusCodeDefault(t *testing.T) {
+	s := New(Options{
+		// Intentionally left blank.
+	})
+
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Access-Control-Request-Method", "GET")
+
+	t.Run("Handler", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.Handler(testHandler).ServeHTTP(res, req)
+		assertResponse(t, res, http.StatusNoContent)
+	})
+	t.Run("HandlerFunc", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.HandlerFunc(res, req)
+		assertResponse(t, res, http.StatusNoContent)
+	})
+	t.Run("Negroni", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.ServeHTTP(res, req, testHandler)
+		assertResponse(t, res, http.StatusNoContent)
+	})
+}
+
+func TestOptionsSuccessStatusCodeOverride(t *testing.T) {
+	s := New(Options{
+		OptionsSuccessStatus: http.StatusOK,
+	})
+
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Access-Control-Request-Method", "GET")
+
+	t.Run("Handler", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.Handler(testHandler).ServeHTTP(res, req)
+		assertResponse(t, res, http.StatusOK)
+	})
+	t.Run("HandlerFunc", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.HandlerFunc(res, req)
+		assertResponse(t, res, http.StatusOK)
+	})
+	t.Run("Negroni", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.ServeHTTP(res, req, testHandler)
+		assertResponse(t, res, http.StatusOK)
+	})
+}
