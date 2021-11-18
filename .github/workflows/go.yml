@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ["1.13"]
+        go: ["1.17"]
     steps:
 
     - name: Set up Go ${{ matrix.go }}
