@@ -12,8 +12,8 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/martini-contrib/render v0.0.0-20150707142108-ec18f8345a11
-	github.com/rs/cors v1.8.1-0.20211222040724-e44d0aa0cd43
-	github.com/rs/cors/wrapper/gin v0.0.0-20211222041030-a520e0beb3aa
+	github.com/rs/cors v1.8.1
+	github.com/rs/cors/wrapper/gin v0.0.0-00010101000000-000000000000
 	github.com/zenazn/goji v1.0.1
 )
 
@@ -98,3 +98,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/rs/cors/wrapper/gin => ../wrapper/gin
+
+replace github.com/rs/cors => ../

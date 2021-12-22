@@ -432,10 +432,6 @@ github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFR
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.0 h1:FCbCCtXNOY3UtUuHUYaghJg4y7Fd14rXifAYUAtL9R8=
 github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6poM+XZ2dLUbcbE=
-github.com/rs/cors v1.8.1-0.20211222040724-e44d0aa0cd43 h1:sYcFZ6x933kt3dmJs+j5MGz2zC2/1OH2BnKHIgbXky0=
-github.com/rs/cors v1.8.1-0.20211222040724-e44d0aa0cd43/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
-github.com/rs/cors/wrapper/gin v0.0.0-20211222041030-a520e0beb3aa h1:p/PkQhK4Vdium2R+gPMqdq2M9ut7tTfz8LbVo6W40hQ=
-github.com/rs/cors/wrapper/gin v0.0.0-20211222041030-a520e0beb3aa/go.mod h1:fBkypZPXVyYWiY+/En6jslDAs0CWvFQzIHVn8TRG9vA=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThCjNc=
