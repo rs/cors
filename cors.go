@@ -26,6 +26,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Options is a configuration container to setup the CORS middleware.
@@ -56,9 +57,8 @@ type Options struct {
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
 	ExposedHeaders []string
-	// MaxAge indicates how long (in seconds) the results of a preflight request
-	// can be cached
-	MaxAge int
+	// MaxAge indicates how long the results of a preflight request can be cached
+	MaxAge time.Duration
 	// AllowCredentials indicates whether the request can include user credentials like
 	// cookies, HTTP authentication or client side SSL certificates.
 	AllowCredentials bool
@@ -95,7 +95,7 @@ type Cors struct {
 	allowedMethods []string
 	// Normalized list of exposed headers
 	exposedHeaders []string
-	maxAge         int
+	maxAge         time.Duration
 	// Set to true when allowed origins contains a "*"
 	allowedOriginsAll bool
 	// Set to true when allowed headers contains a "*"
@@ -320,7 +320,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
 	if c.maxAge > 0 {
-		headers.Set("Access-Control-Max-Age", strconv.Itoa(c.maxAge))
+		headers.Set("Access-Control-Max-Age", strconv.FormatInt(int64(c.maxAge/time.Second), 10))
 	}
 	c.logf("  Preflight response headers: %v", headers)
 }

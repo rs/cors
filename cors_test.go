@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 )
 
 var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +207,7 @@ func TestSpec(t *testing.T) {
 			Options{
 				AllowedOrigins: []string{"http://example.com/"},
 				AllowedMethods: []string{"GET"},
-				MaxAge:         10,
+				MaxAge:         10 * time.Second,
 			},
 			"OPTIONS",
 			map[string]string{
