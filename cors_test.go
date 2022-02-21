@@ -18,6 +18,7 @@ var allHeaders = []string{
 	"Access-Control-Allow-Methods",
 	"Access-Control-Allow-Headers",
 	"Access-Control-Allow-Credentials",
+	"Access-Control-Allow-Private-Network",
 	"Access-Control-Max-Age",
 	"Access-Control-Expose-Headers",
 }
@@ -384,6 +385,44 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin":      "http://foobar.com",
 				"Access-Control-Allow-Methods":     "GET",
 				"Access-Control-Allow-Credentials": "true",
+			},
+			true,
+		},
+		{
+			"AllowedPrivateNetwork",
+			Options{
+				AllowedOrigins:      []string{"http://foobar.com"},
+				AllowPrivateNetwork: true,
+			},
+			"OPTIONS",
+			map[string]string{
+				"Origin":                                 "http://foobar.com",
+				"Access-Control-Request-Method":          "GET",
+				"Access-Control-Request-Private-Network": "true",
+			},
+			map[string]string{
+				"Vary":                                 "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+				"Access-Control-Allow-Origin":          "http://foobar.com",
+				"Access-Control-Allow-Methods":         "GET",
+				"Access-Control-Allow-Private-Network": "true",
+			},
+			true,
+		},
+		{
+			"DisallowedPrivateNetwork",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			map[string]string{
+				"Origin":                                "http://foobar.com",
+				"Access-Control-Request-Method":         "GET",
+				"Access-Control-Request-PrivateNetwork": "true",
+			},
+			map[string]string{
+				"Vary":                         "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+				"Access-Control-Allow-Origin":  "http://foobar.com",
+				"Access-Control-Allow-Methods": "GET",
 			},
 			true,
 		},
