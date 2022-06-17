@@ -647,3 +647,61 @@ func TestOptionsSuccessStatusCodeOverride(t *testing.T) {
 		assertResponse(t, res, http.StatusOK)
 	})
 }
+
+func TestCorsAreHeadersAllowed(t *testing.T) {
+	cases := []struct {
+		name             string
+		allowedHeaders   []string
+		requestedHeaders []string
+		want             bool
+	}{
+		{
+			name:             "nil allowedHeaders",
+			allowedHeaders:   nil,
+			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			want:             false,
+		},
+		{
+			name:             "star allowedHeaders",
+			allowedHeaders:   []string{"*"},
+			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			want:             true,
+		},
+		{
+			name:             "empty reqHeader",
+			allowedHeaders:   nil,
+			requestedHeaders: parseHeaderList(""),
+			want:             true,
+		},
+		{
+			name:             "match allowedHeaders",
+			allowedHeaders:   []string{"Content-Type", "X-PINGOTHER", "X-APP-KEY"},
+			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			want:             true,
+		},
+		{
+			name:             "not matched allowedHeaders",
+			allowedHeaders:   []string{"X-PINGOTHER"},
+			requestedHeaders: parseHeaderList("X-API-KEY, Content-Type"),
+			want:             false,
+		},
+		{
+			name:             "allowedHeaders should be a superset of requestedHeaders",
+			allowedHeaders:   []string{"X-PINGOTHER"},
+			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			want:             false,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			c := New(Options{AllowedHeaders: tt.allowedHeaders})
+			have := c.areHeadersAllowed(tt.requestedHeaders)
+			if have != tt.want {
+				t.Errorf("Cors.areHeadersAllowed() have: %t want: %t", have, tt.want)
+			}
+		})
+	}
+}
