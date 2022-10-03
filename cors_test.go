@@ -401,7 +401,7 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Request-Private-Network": "true",
 			},
 			map[string]string{
-				"Vary":                                 "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+				"Vary":                                 "Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Access-Control-Request-Private-Network",
 				"Access-Control-Allow-Origin":          "http://foobar.com",
 				"Access-Control-Allow-Methods":         "GET",
 				"Access-Control-Allow-Private-Network": "true",
