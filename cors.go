@@ -287,6 +287,9 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	headers.Add("Vary", "Origin")
 	headers.Add("Vary", "Access-Control-Request-Method")
 	headers.Add("Vary", "Access-Control-Request-Headers")
+	if c.allowPrivateNetwork {
+		headers.Add("Vary", "Access-Control-Request-Private-Network")
+	}
 
 	if origin == "" {
 		c.logf("  Preflight aborted: empty origin")
