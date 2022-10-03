@@ -77,6 +77,7 @@ Parameters are passed to the middleware thru the `cors.New` method as follow:
 ```go
 c := cors.New(cors.Options{
     AllowedOrigins: []string{"http://foo.com", "http://foo.com:8080"},
+    AllowedHeaders:   []string{"Authorization", "Content-Type"},
     AllowCredentials: true,
     // Enable Debugging for testing, consider disabling in production
     Debug: true,
