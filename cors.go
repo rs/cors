@@ -4,15 +4,15 @@ as defined by http://www.w3.org/TR/cors/
 
 You can configure it by passing an option struct to cors.New:
 
-    c := cors.New(cors.Options{
-        AllowedOrigins:   []string{"foo.com"},
-        AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
-        AllowCredentials: true,
-    })
+	c := cors.New(cors.Options{
+	    AllowedOrigins:   []string{"foo.com"},
+	    AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
+	    AllowCredentials: true,
+	})
 
 Then insert the handler in the chain:
 
-    handler = c.Handler(handler)
+	handler = c.Handler(handler)
 
 See Options documentation for more options.
 
@@ -162,8 +162,19 @@ func New(options Options) *Cors {
 		// Use sensible defaults
 		c.allowedHeaders = []string{"Origin", "Accept", "Content-Type", "X-Requested-With"}
 	} else {
-		// Origin is always appended as some browsers will always request for this header at preflight
-		c.allowedHeaders = convert(append(options.AllowedHeaders, "Origin"), http.CanonicalHeaderKey)
+		// Remove duplicated allowed headers
+		allowedHeadersMap := map[string]struct{}{
+			// Origin is always appended as some browsers will always request for this header at preflight
+			"Origin": {},
+		}
+		for _, h := range options.AllowedHeaders {
+			allowedHeadersMap[h] = struct{}{}
+		}
+		allowedHeadersToConvert := []string{}
+		for k := range allowedHeadersMap {
+			allowedHeadersToConvert = append(allowedHeadersToConvert, k)
+		}
+		c.allowedHeaders = convert(allowedHeadersToConvert, http.CanonicalHeaderKey)
 		for _, h := range options.AllowedHeaders {
 			if h == "*" {
 				c.allowedHeadersAll = true

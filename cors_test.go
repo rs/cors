@@ -691,6 +691,12 @@ func TestCorsAreHeadersAllowed(t *testing.T) {
 			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
 			want:             false,
 		},
+		{
+			name:             "no repeated headers",
+			allowedHeaders:   []string{"Origin", "Origin", "Origin", "Content-Type", "Content-Type"},
+			requestedHeaders: parseHeaderList("Origin, Content-Type"),
+			want:             true,
+		},
 	}
 
 	for _, tt := range cases {
