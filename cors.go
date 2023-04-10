@@ -232,8 +232,14 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 			}
 		} else {
 			c.logf("Handler: Actual request")
-			c.handleActualRequest(w, r)
+			// handleActualRequest() must be after ServerHTTP() so we replace CORS headers.
+			// Avoids problems where applications set these headers as well, leading to duplicates
+			// and errors like:
+			// Access to XMLHttpRequest at '...' from origin '...' has been blocked by CORS policy:
+			// The 'Access-Control-Allow-Origin' header contains multiple values '*, *', but only
+			// one is allowed.
 			h.ServeHTTP(w, r)
+			c.handleActualRequest(w, r)
 		}
 	})
 }
@@ -247,6 +253,8 @@ func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(c.optionsSuccessStatus)
 	} else {
 		c.logf("HandlerFunc: Actual request")
+		// TODO: This should be called after the application to avoid duplicate CORS headers
+		// See TestDuplicateHeaders test
 		c.handleActualRequest(w, r)
 	}
 }
@@ -267,8 +275,14 @@ func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 		}
 	} else {
 		c.logf("ServeHTTP: Actual request")
-		c.handleActualRequest(w, r)
+		// handleActualRequest() must be after next() so we replace CORS headers.
+		// Avoids problems where applications set these headers as well, leading to duplicates
+		// and errors like:
+		// Access to XMLHttpRequest at '...' from origin '...' has been blocked by CORS policy:
+		// The 'Access-Control-Allow-Origin' header contains multiple values '*, *', but only
+		// one is allowed.
 		next(w, r)
+		c.handleActualRequest(w, r)
 	}
 }
 

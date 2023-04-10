@@ -24,6 +24,7 @@ var allHeaders = []string{
 }
 
 func assertHeaders(t *testing.T, resHeaders http.Header, expHeaders map[string]string) {
+	t.Helper()
 	for _, name := range allHeaders {
 		got := strings.Join(resHeaders[name], ", ")
 		want := expHeaders[name]
@@ -704,4 +705,39 @@ func TestCorsAreHeadersAllowed(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDuplicateHeaders(t *testing.T) {
+	setAllowedOriginHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// test adding a CORS header that should be replaced by the middleware
+		w.Header().Add("Access-Control-Allow-Origin", "header-should-be-replaced")
+		w.Write([]byte("bar"))
+	})
+
+	s := New(Options{})
+
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Set("Origin", "http://example.com")
+
+	expectedHeaders := map[string]string{
+		"Vary":                        "Origin",
+		"Access-Control-Allow-Origin": "*",
+	}
+
+	t.Run("Handler", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.Handler(setAllowedOriginHandler).ServeHTTP(res, req)
+		assertHeaders(t, res.Header(), expectedHeaders)
+	})
+	t.Run("HandlerFunc", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.HandlerFunc(res, req)
+		// TODO: this doesn't actually call the middleware; make it do that?
+		assertHeaders(t, res.Header(), expectedHeaders)
+	})
+	t.Run("Negroni", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.ServeHTTP(res, req, setAllowedOriginHandler)
+		assertHeaders(t, res.Header(), expectedHeaders)
+	})
 }
