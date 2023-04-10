@@ -251,7 +251,8 @@ func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Negroni compatible interface
+// ServeHTTP is a Negroni compatible interface. See:
+// https://pkg.go.dev/github.com/codegangsta/negroni
 func (c *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 		c.logf("ServeHTTP: Preflight request")
@@ -387,7 +388,8 @@ func (c *Cors) logf(format string, a ...interface{}) {
 	}
 }
 
-// check the Origin of a request. No origin at all is also allowed.
+// OriginAllowed checks the Origin of a request, returning true if the Origin is permitted.
+// No origin at all is also allowed.
 func (c *Cors) OriginAllowed(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
 	return c.isOriginAllowed(r, origin)
