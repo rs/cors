@@ -1,6 +1,8 @@
 package cors
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -502,6 +504,29 @@ func TestDebug(t *testing.T) {
 
 	if s.Log == nil {
 		t.Error("Logger not created when debug=true")
+	}
+}
+
+type testLogger struct {
+	buf *bytes.Buffer
+}
+
+func (l *testLogger) Printf(format string, v ...interface{}) {
+	fmt.Fprintf(l.buf, format, v...)
+}
+
+func TestLogger(t *testing.T) {
+	logger := &testLogger{buf: &bytes.Buffer{}}
+	s := New(Options{
+		Logger: logger,
+	})
+
+	if s.Log == nil {
+		t.Error("Logger not created when Logger is set")
+	}
+	s.logf("test")
+	if logger.buf.String() != "test" {
+		t.Error("Logger not used")
 	}
 }
 

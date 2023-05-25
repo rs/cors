@@ -73,6 +73,8 @@ type Options struct {
 	OptionsSuccessStatus int
 	// Debugging flag adds additional output to debug server side CORS issues
 	Debug bool
+	// Adds a custom logger, implies Debug is true
+	Logger Logger
 }
 
 // Logger generic interface for logger
@@ -120,6 +122,7 @@ func New(options Options) *Cors {
 		allowPrivateNetwork:    options.AllowPrivateNetwork,
 		maxAge:                 options.MaxAge,
 		optionPassthrough:      options.OptionsPassthrough,
+		Log:                    options.Logger,
 	}
 	if options.Debug && c.Log == nil {
 		c.Log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
