@@ -324,6 +324,9 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		// from Access-Control-Request-Headers can be enough
 		headers.Set("Access-Control-Allow-Headers", strings.Join(reqHeaders, ", "))
 	}
+	if len(c.exposedHeaders) > 0 {
+		headers.Set("Access-Control-Expose-Headers", strings.Join(c.exposedHeaders, ", "))
+	}
 	if c.allowCredentials {
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
