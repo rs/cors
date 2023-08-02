@@ -35,6 +35,7 @@ func BenchmarkWithout(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		clear(res.header)
 		testHandler.ServeHTTP(res, req)
 	}
 }
@@ -48,6 +49,7 @@ func BenchmarkDefault(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		clear(res.header)
 		handler.ServeHTTP(res, req)
 	}
 }
@@ -64,6 +66,7 @@ func BenchmarkAllowedOrigin(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		clear(res.header)
 		handler.ServeHTTP(res, req)
 	}
 }
@@ -78,6 +81,7 @@ func BenchmarkPreflight(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		clear(res.header)
 		handler.ServeHTTP(res, req)
 	}
 }
@@ -93,6 +97,13 @@ func BenchmarkPreflightHeader(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		clear(res.header)
 		handler.ServeHTTP(res, req)
+	}
+}
+
+func clear(h http.Header) {
+	for k := range h {
+		delete(h, k)
 	}
 }
