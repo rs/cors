@@ -20,9 +20,17 @@ func (r FakeResponse) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
+const (
+	headerOrigin  = "Origin"
+	headerACRM    = "Access-Control-Request-Method"
+	headerACRH    = "Access-Control-Request-Headers"
+	dummyEndpoint = "http://example.com/foo"
+	dummyOrigin   = "https://somedomain.com"
+)
+
 func BenchmarkWithout(b *testing.B) {
 	res := FakeResponse{http.Header{}}
-	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -33,8 +41,8 @@ func BenchmarkWithout(b *testing.B) {
 
 func BenchmarkDefault(b *testing.B) {
 	res := FakeResponse{http.Header{}}
-	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "somedomain.com")
+	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
 	handler := Default().Handler(testHandler)
 
 	b.ReportAllocs()
@@ -46,10 +54,10 @@ func BenchmarkDefault(b *testing.B) {
 
 func BenchmarkAllowedOrigin(b *testing.B) {
 	res := FakeResponse{http.Header{}}
-	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "somedomain.com")
+	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
 	c := New(Options{
-		AllowedOrigins: []string{"somedomain.com"},
+		AllowedOrigins: []string{dummyOrigin},
 	})
 	handler := c.Handler(testHandler)
 
@@ -62,8 +70,8 @@ func BenchmarkAllowedOrigin(b *testing.B) {
 
 func BenchmarkPreflight(b *testing.B) {
 	res := FakeResponse{http.Header{}}
-	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Access-Control-Request-Method", "GET")
+	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerACRM, http.MethodGet)
 	handler := Default().Handler(testHandler)
 
 	b.ReportAllocs()
@@ -75,9 +83,9 @@ func BenchmarkPreflight(b *testing.B) {
 
 func BenchmarkPreflightHeader(b *testing.B) {
 	res := FakeResponse{http.Header{}}
-	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Access-Control-Request-Method", "GET")
-	req.Header.Add("Access-Control-Request-Headers", "Accept")
+	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerACRM, http.MethodGet)
+	req.Header.Add(headerACRH, "Accept")
 	handler := Default().Handler(testHandler)
 
 	b.ReportAllocs()
