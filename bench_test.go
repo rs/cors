@@ -71,6 +71,7 @@ func BenchmarkAllowedOrigin(b *testing.B) {
 func BenchmarkPreflight(b *testing.B) {
 	res := FakeResponse{http.Header{}}
 	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
 	req.Header.Add(headerACRM, http.MethodGet)
 	handler := Default().Handler(testHandler)
 
@@ -84,6 +85,7 @@ func BenchmarkPreflight(b *testing.B) {
 func BenchmarkPreflightHeader(b *testing.B) {
 	res := FakeResponse{http.Header{}}
 	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
 	req.Header.Add(headerACRM, http.MethodGet)
 	req.Header.Add(headerACRH, "Accept")
 	handler := Default().Handler(testHandler)
