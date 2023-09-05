@@ -189,8 +189,19 @@ func New(options Options) *Cors {
 		// Use sensible defaults
 		c.allowedHeaders = []string{"Origin", "Accept", "Content-Type", "X-Requested-With"}
 	} else {
-		// Origin is always appended as some browsers will always request for this header at preflight
-		c.allowedHeaders = convert(append(options.AllowedHeaders, "Origin"), http.CanonicalHeaderKey)
+		// Remove duplicated allowed headers
+		allowedHeadersMap := map[string]struct{}{
+			// Origin is always appended as some browsers will always request for this header at preflight
+			"Origin": {},
+		}
+		for _, h := range options.AllowedHeaders {
+			allowedHeadersMap[h] = struct{}{}
+		}
+		allowedHeadersToConvert := []string{}
+		for k := range allowedHeadersMap {
+			allowedHeadersToConvert = append(allowedHeadersToConvert, k)
+		}
+		c.allowedHeaders = convert(allowedHeadersToConvert, http.CanonicalHeaderKey)
 		for _, h := range options.AllowedHeaders {
 			if h == "*" {
 				c.allowedHeadersAll = true
