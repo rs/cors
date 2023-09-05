@@ -10,8 +10,9 @@ import (
 	"testing"
 )
 
+var testResponse = []byte("bar")
 var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("bar"))
+	_, _ = w.Write(testResponse)
 })
 
 var allHeaders = []string{
@@ -26,6 +27,7 @@ var allHeaders = []string{
 }
 
 func assertHeaders(t *testing.T, resHeaders http.Header, expHeaders map[string]string) {
+	t.Helper()
 	for _, name := range allHeaders {
 		got := strings.Join(resHeaders[name], ", ")
 		want := expHeaders[name]
@@ -36,6 +38,7 @@ func assertHeaders(t *testing.T, resHeaders http.Header, expHeaders map[string]s
 }
 
 func assertResponse(t *testing.T, res *httptest.ResponseRecorder, responseCode int) {
+	t.Helper()
 	if responseCode != res.Code {
 		t.Errorf("assertResponse: expected response code to be %d but got %d. ", responseCode, res.Code)
 	}
@@ -721,37 +724,37 @@ func TestCorsAreHeadersAllowed(t *testing.T) {
 		{
 			name:             "nil allowedHeaders",
 			allowedHeaders:   nil,
-			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
 			want:             false,
 		},
 		{
 			name:             "star allowedHeaders",
 			allowedHeaders:   []string{"*"},
-			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
 			want:             true,
 		},
 		{
 			name:             "empty reqHeader",
 			allowedHeaders:   nil,
-			requestedHeaders: parseHeaderList(""),
+			requestedHeaders: []string{},
 			want:             true,
 		},
 		{
 			name:             "match allowedHeaders",
 			allowedHeaders:   []string{"Content-Type", "X-PINGOTHER", "X-APP-KEY"},
-			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
 			want:             true,
 		},
 		{
 			name:             "not matched allowedHeaders",
 			allowedHeaders:   []string{"X-PINGOTHER"},
-			requestedHeaders: parseHeaderList("X-API-KEY, Content-Type"),
+			requestedHeaders: []string{"X-API-KEY, Content-Type"},
 			want:             false,
 		},
 		{
 			name:             "allowedHeaders should be a superset of requestedHeaders",
 			allowedHeaders:   []string{"X-PINGOTHER"},
-			requestedHeaders: parseHeaderList("X-PINGOTHER, Content-Type"),
+			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
 			want:             false,
 		},
 	}
@@ -761,7 +764,7 @@ func TestCorsAreHeadersAllowed(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			c := New(Options{AllowedHeaders: tt.allowedHeaders})
-			have := c.areHeadersAllowed(tt.requestedHeaders)
+			have := c.areHeadersAllowed(convert(splitHeaderValues(tt.requestedHeaders), http.CanonicalHeaderKey))
 			if have != tt.want {
 				t.Errorf("Cors.areHeadersAllowed() have: %t want: %t", have, tt.want)
 			}
