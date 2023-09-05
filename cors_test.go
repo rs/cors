@@ -243,6 +243,26 @@ func TestSpec(t *testing.T) {
 			true,
 		},
 		{
+			"MaxAgeNegative",
+			Options{
+				AllowedOrigins: []string{"http://example.com/"},
+				AllowedMethods: []string{"GET"},
+				MaxAge:         -1,
+			},
+			"OPTIONS",
+			map[string]string{
+				"Origin":                        "http://example.com/",
+				"Access-Control-Request-Method": "GET",
+			},
+			map[string]string{
+				"Vary":                         "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+				"Access-Control-Allow-Origin":  "http://example.com/",
+				"Access-Control-Allow-Methods": "GET",
+				"Access-Control-Max-Age":       "0",
+			},
+			true,
+		},
+		{
 			"AllowedMethod",
 			Options{
 				AllowedOrigins: []string{"http://foobar.com"},

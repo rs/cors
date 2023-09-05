@@ -66,7 +66,10 @@ type Options struct {
 	// API specification
 	ExposedHeaders []string
 	// MaxAge indicates how long (in seconds) the results of a preflight request
-	// can be cached
+	// can be cached. Default value is 0, which stands for no
+	// Access-Control-Max-Age header to be sent back, resulting in browsers
+	// using their default value (5s by spec). If you need to force a 0 max-age,
+	// set `MaxAge` to a negative value (ie: -1).
 	MaxAge int
 	// AllowCredentials indicates whether the request can include user credentials like
 	// cookies, HTTP authentication or client side SSL certificates.
@@ -362,6 +365,8 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	}
 	if c.maxAge > 0 {
 		headers.Set("Access-Control-Max-Age", strconv.Itoa(c.maxAge))
+	} else if c.maxAge < 0 {
+		headers.Set("Access-Control-Max-Age", "0")
 	}
 	c.logf("  Preflight response headers: %v", headers)
 }
