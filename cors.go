@@ -4,15 +4,15 @@ as defined by http://www.w3.org/TR/cors/
 
 You can configure it by passing an option struct to cors.New:
 
-    c := cors.New(cors.Options{
-        AllowedOrigins:   []string{"foo.com"},
-        AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
-        AllowCredentials: true,
-    })
+	c := cors.New(cors.Options{
+	    AllowedOrigins:   []string{"foo.com"},
+	    AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
+	    AllowCredentials: true,
+	})
 
 Then insert the handler in the chain:
 
-    handler = c.Handler(handler)
+	handler = c.Handler(handler)
 
 See Options documentation for more options.
 
@@ -129,7 +129,7 @@ func New(options Options) *Cors {
 	}
 
 	// Normalize options
-	// Note: for origins and methods matching, the spec requires a case-sensitive matching.
+	// Note: for origins matching, the spec requires a case-sensitive matching.
 	// As it may error prone, we chose to ignore the spec here.
 
 	// Allowed Origins
@@ -181,7 +181,7 @@ func New(options Options) *Cors {
 		// Default is spec's "simple" methods
 		c.allowedMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 	} else {
-		c.allowedMethods = convert(options.AllowedMethods, strings.ToUpper)
+		c.allowedMethods = options.AllowedMethods
 	}
 
 	// Options Success Status Code
@@ -325,7 +325,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	}
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
-	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
+	headers.Set("Access-Control-Allow-Methods", reqMethod)
 	if len(reqHeaders) > 0 {
 
 		// Spec says: Since the list of headers can be unbounded, simply returning supported headers
@@ -429,7 +429,6 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		// If no method allowed, always return false, even for preflight request
 		return false
 	}
-	method = strings.ToUpper(method)
 	if method == http.MethodOptions {
 		// Always allow preflight requests
 		return true
