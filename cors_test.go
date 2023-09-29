@@ -752,3 +752,56 @@ func TestCorsAreHeadersAllowed(t *testing.T) {
 		})
 	}
 }
+
+func TestAccessControlExposeHeadersPresence(t *testing.T) {
+	cases := []struct {
+		name    string
+		options Options
+		want    bool
+	}{
+		{
+			name:    "omit",
+			options: Options{},
+			want:    false,
+		},
+		{
+			name: "include",
+			options: Options{
+				ExposedHeaders: []string{"X-Something"},
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			s := New(tt.options)
+
+			req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+			req.Header.Add("Origin", "http://foobar.com")
+
+			assertExposeHeaders := func(t *testing.T, resHeaders http.Header) {
+				if _, have := resHeaders["Access-Control-Expose-Headers"]; have != tt.want {
+					t.Errorf("Access-Control-Expose-Headers have: %t want: %t", have, tt.want)
+				}
+			}
+
+			t.Run("Handler", func(t *testing.T) {
+				res := httptest.NewRecorder()
+				s.Handler(testHandler).ServeHTTP(res, req)
+				assertExposeHeaders(t, res.Header())
+			})
+			t.Run("HandlerFunc", func(t *testing.T) {
+				res := httptest.NewRecorder()
+				s.HandlerFunc(res, req)
+				assertExposeHeaders(t, res.Header())
+			})
+			t.Run("Negroni", func(t *testing.T) {
+				res := httptest.NewRecorder()
+				s.ServeHTTP(res, req, testHandler)
+				assertExposeHeaders(t, res.Header())
+			})
+		})
+	}
+
+}
