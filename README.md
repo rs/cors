@@ -102,6 +102,7 @@ See [API documentation](http://godoc.org/github.com/rs/cors) for more info.
 
 ## Benchmarks
 
+```
 goos: darwin
 goarch: arm64
 pkg: github.com/rs/cors
@@ -114,6 +115,8 @@ BenchmarkWildcard/match-10      250336476       4.784 ns/op       0 B/op       0
 BenchmarkWildcard/too_short-10 1000000000       0.6354 ns/op       0 B/op       0 allocs/op
 PASS
 ok  	github.com/rs/cors	9.613s
+```
+
 ## Licenses
 
 All source code is licensed under the [MIT License](https://raw.github.com/rs/cors/master/LICENSE).
