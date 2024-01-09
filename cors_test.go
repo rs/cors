@@ -481,6 +481,23 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Allow-Origin": "http://foobar.com",
 			},
 			true,
+		}, {
+			"AllowedOriginsPlusAllowOriginFunc",
+			Options{
+				AllowedOrigins: []string{"*"},
+				AllowOriginFunc: func(origin string) bool {
+					return true
+				},
+			},
+			"GET",
+			map[string]string{
+				"Origin": "http://foobar.com",
+			},
+			map[string]string{
+				"Vary":                        "Origin",
+				"Access-Control-Allow-Origin": "http://foobar.com",
+			},
+			true,
 		},
 	}
 	for i := range cases {
