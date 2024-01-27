@@ -40,57 +40,57 @@ type Options struct {
 	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penalty.
 	// Only one wildcard can be used per origin.
 	// Default value is ["*"]
-	AllowedOrigins []string
+	AllowedOrigins []string `json:"allowedOrigins,omitempty"`
 	// AllowOriginFunc is a custom function to validate the origin. It take the
 	// origin as argument and returns true if allowed or false otherwise. If
 	// this option is set, the content of `AllowedOrigins` is ignored.
-	AllowOriginFunc func(origin string) bool
+	AllowOriginFunc func(origin string) bool `json:"-"`
 	// AllowOriginRequestFunc is a custom function to validate the origin. It
 	// takes the HTTP Request object and the origin as argument and returns true
 	// if allowed or false otherwise. If headers are used take the decision,
 	// consider using AllowOriginVaryRequestFunc instead. If this option is set,
 	// the content of `AllowedOrigins`, `AllowOriginFunc` are ignored.
-	AllowOriginRequestFunc func(r *http.Request, origin string) bool
+	AllowOriginRequestFunc func(r *http.Request, origin string) bool `json:"-"`
 	// AllowOriginVaryRequestFunc is a custom function to validate the origin.
 	// It takes the HTTP Request object and the origin as argument and returns
 	// true if allowed or false otherwise with a list of headers used to take
 	// that decision if any so they can be added to the Vary header. If this
 	// option is set, the content of `AllowedOrigins`, `AllowOriginFunc` and
 	// `AllowOriginRequestFunc` are ignored.
-	AllowOriginVaryRequestFunc func(r *http.Request, origin string) (bool, []string)
+	AllowOriginVaryRequestFunc func(r *http.Request, origin string) (bool, []string) `json:"-"`
 	// AllowedMethods is a list of methods the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
-	AllowedMethods []string
+	AllowedMethods []string `json:"allowedMethods,omitempty"`
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests.
 	// If the special "*" value is present in the list, all headers will be allowed.
 	// Default value is [].
-	AllowedHeaders []string
+	AllowedHeaders []string `json:"allowedHeaders,omitempty"`
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
-	ExposedHeaders []string
+	ExposedHeaders []string `json:"exposedHeaders,omitempty"`
 	// MaxAge indicates how long (in seconds) the results of a preflight request
 	// can be cached. Default value is 0, which stands for no
 	// Access-Control-Max-Age header to be sent back, resulting in browsers
 	// using their default value (5s by spec). If you need to force a 0 max-age,
 	// set `MaxAge` to a negative value (ie: -1).
-	MaxAge int
+	MaxAge int `json:"maxAge,omitempty"`
 	// AllowCredentials indicates whether the request can include user credentials like
 	// cookies, HTTP authentication or client side SSL certificates.
-	AllowCredentials bool
+	AllowCredentials bool `json:"allowCredentials,omitempty"`
 	// AllowPrivateNetwork indicates whether to accept cross-origin requests over a
 	// private network.
-	AllowPrivateNetwork bool
+	AllowPrivateNetwork bool `json:"allowPrivateNetwork,omitempty"`
 	// OptionsPassthrough instructs preflight to let other potential next handlers to
 	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
-	OptionsPassthrough bool
+	OptionsPassthrough bool `json:"optionsPassthrough,omitempty"`
 	// Provides a status code to use for successful OPTIONS requests.
 	// Default value is http.StatusNoContent (204).
-	OptionsSuccessStatus int
+	OptionsSuccessStatus int `json:"optionsSuccessStatus,omitempty"`
 	// Debugging flag adds additional output to debug server side CORS issues
-	Debug bool
+	Debug bool `json:"debug,omitempty"`
 	// Adds a custom logger, implies Debug is true
-	Logger Logger
+	Logger Logger `json:"-"`
 }
 
 // Logger generic interface for logger
