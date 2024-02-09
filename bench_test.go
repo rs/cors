@@ -100,7 +100,9 @@ func BenchmarkPreflightHeader(b *testing.B) {
 func makeFakeResponses(n int) []*FakeResponse {
 	resps := make([]*FakeResponse, n)
 	for i := 0; i < n; i++ {
-		resps[i] = &FakeResponse{http.Header{}}
+		resps[i] = &FakeResponse{http.Header{
+			"Content-Type": []string{"text/plain"},
+		}}
 	}
 	return resps
 }

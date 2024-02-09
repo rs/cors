@@ -394,10 +394,10 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	allowed, additionalVaryHeaders := c.isOriginAllowed(r, origin)
 
 	// Always set Vary, see https://github.com/rs/cors/issues/10
-	if vary, found := headers["Vary"]; found {
-		headers["Vary"] = append(vary, headerVaryOrigin[0])
-	} else {
+	if vary := headers["Vary"]; vary == nil {
 		headers["Vary"] = headerVaryOrigin
+	} else {
+		headers["Vary"] = append(vary, headerVaryOrigin[0])
 	}
 	if len(additionalVaryHeaders) > 0 {
 		headers.Add("Vary", strings.Join(convert(additionalVaryHeaders, http.CanonicalHeaderKey), ", "))

@@ -106,15 +106,15 @@ See [API documentation](http://godoc.org/github.com/rs/cors) for more info.
 goos: darwin
 goarch: arm64
 pkg: github.com/rs/cors
-BenchmarkWithout-10             352671961       3.317 ns/op       0 B/op       0 allocs/op
-BenchmarkDefault-10              18261723       65.63 ns/op       0 B/op       0 allocs/op
-BenchmarkAllowedOrigin-10        13309591       90.21 ns/op       0 B/op       0 allocs/op
-BenchmarkPreflight-10             7247728       166.9 ns/op       0 B/op       0 allocs/op
-BenchmarkPreflightHeader-10       5915437       202.9 ns/op       0 B/op       0 allocs/op
-BenchmarkWildcard/match-10      250336476       4.784 ns/op       0 B/op       0 allocs/op
-BenchmarkWildcard/too_short-10 1000000000       0.6354 ns/op       0 B/op       0 allocs/op
+BenchmarkWithout-10            	135325480	         8.124 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDefault-10            	24082140	        51.40 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAllowedOrigin-10      	16424518	        88.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPreflight-10          	 8010259	       147.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPreflightHeader-10    	 6850962	       175.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkWildcard/match-10     	253275342	         4.714 ns/op	       0 B/op	       0 allocs/op
+BenchmarkWildcard/too_short-10 	1000000000	         0.6235 ns/op	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/rs/cors	9.613s
+ok  	github.com/rs/cors	99.131s
 ```
 
 ## Licenses
