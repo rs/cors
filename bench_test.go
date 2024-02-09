@@ -29,19 +29,18 @@ const (
 )
 
 func BenchmarkWithout(b *testing.B) {
-	res := FakeResponse{http.Header{}}
+	resps := makeFakeResponses(b.N)
 	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		clear(res.header)
-		testHandler.ServeHTTP(res, req)
+		testHandler.ServeHTTP(resps[i], req)
 	}
 }
 
 func BenchmarkDefault(b *testing.B) {
-	res := FakeResponse{http.Header{}}
+	resps := makeFakeResponses(b.N)
 	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
 	req.Header.Add(headerOrigin, dummyOrigin)
 	handler := Default().Handler(testHandler)
@@ -49,13 +48,12 @@ func BenchmarkDefault(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		clear(res.header)
-		handler.ServeHTTP(res, req)
+		handler.ServeHTTP(resps[i], req)
 	}
 }
 
 func BenchmarkAllowedOrigin(b *testing.B) {
-	res := FakeResponse{http.Header{}}
+	resps := makeFakeResponses(b.N)
 	req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
 	req.Header.Add(headerOrigin, dummyOrigin)
 	c := New(Options{
@@ -66,13 +64,12 @@ func BenchmarkAllowedOrigin(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		clear(res.header)
-		handler.ServeHTTP(res, req)
+		handler.ServeHTTP(resps[i], req)
 	}
 }
 
 func BenchmarkPreflight(b *testing.B) {
-	res := FakeResponse{http.Header{}}
+	resps := makeFakeResponses(b.N)
 	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
 	req.Header.Add(headerOrigin, dummyOrigin)
 	req.Header.Add(headerACRM, http.MethodGet)
@@ -81,13 +78,12 @@ func BenchmarkPreflight(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		clear(res.header)
-		handler.ServeHTTP(res, req)
+		handler.ServeHTTP(resps[i], req)
 	}
 }
 
 func BenchmarkPreflightHeader(b *testing.B) {
-	res := FakeResponse{http.Header{}}
+	resps := makeFakeResponses(b.N)
 	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
 	req.Header.Add(headerOrigin, dummyOrigin)
 	req.Header.Add(headerACRM, http.MethodGet)
@@ -97,13 +93,16 @@ func BenchmarkPreflightHeader(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		clear(res.header)
-		handler.ServeHTTP(res, req)
+		handler.ServeHTTP(resps[i], req)
 	}
 }
 
-func clear(h http.Header) {
-	for k := range h {
-		delete(h, k)
+func makeFakeResponses(n int) []*FakeResponse {
+	resps := make([]*FakeResponse, n)
+	for i := 0; i < n; i++ {
+		resps[i] = &FakeResponse{http.Header{
+			"Content-Type": []string{"text/plain"},
+		}}
 	}
+	return resps
 }
