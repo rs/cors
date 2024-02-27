@@ -50,6 +50,8 @@ type Options struct {
 	// if allowed or false otherwise. If headers are used take the decision,
 	// consider using AllowOriginVaryRequestFunc instead. If this option is set,
 	// the contents of `AllowedOrigins`, `AllowOriginFunc` are ignored.
+	//
+	// Deprecated: use `AllowOriginVaryRequestFunc` instead.
 	AllowOriginRequestFunc func(r *http.Request, origin string) bool
 	// AllowOriginVaryRequestFunc is a custom function to validate the origin.
 	// It takes the HTTP Request object and the origin as argument and returns
