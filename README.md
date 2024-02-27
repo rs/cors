@@ -94,6 +94,7 @@ handler = c.Handler(handler)
 * **AllowedHeaders** `[]string`: A list of non simple headers the client is allowed to use with cross-domain requests.
 * **ExposedHeaders** `[]string`: Indicates which headers are safe to expose to the API of a CORS API specification.
 * **AllowCredentials** `bool`: Indicates whether the request can include user credentials like cookies, HTTP authentication or client side SSL certificates. The default is `false`.
+* **AllowPrivateNetwork** `bool`: Indicates whether to accept cross-origin requests over a private network.
 * **MaxAge** `int`: Indicates how long (in seconds) the results of a preflight request can be cached. The default is `0` which stands for no max age.
 * **OptionsPassthrough** `bool`: Instructs preflight to let other potential next handlers to process the `OPTIONS` method. Turn this on if your application handles `OPTIONS`.
 * **OptionsSuccessStatus** `int`: Provides a status code to use for successful OPTIONS requests. Default value is `http.StatusNoContent` (`204`).
