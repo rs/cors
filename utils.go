@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-type converter func(string) string
-
 type wildcard struct {
 	prefix string
 	suffix string
@@ -17,29 +15,12 @@ func (w wildcard) match(s string) bool {
 }
 
 // convert converts a list of string using the passed converter function
-func convert(s []string, c converter) []string {
-	out, _ := convertDidCopy(s, c)
-	return out
-}
-
-// convertDidCopy is same as convert but returns true if it copied the slice
-func convertDidCopy(s []string, c converter) ([]string, bool) {
-	out := s
-	copied := false
-	for i, v := range s {
-		if !copied {
-			v2 := c(v)
-			if v2 != v {
-				out = make([]string, len(s))
-				copy(out, s[:i])
-				out[i] = v2
-				copied = true
-			}
-		} else {
-			out[i] = c(v)
-		}
+func convert(s []string, f func(string) string) []string {
+	out := make([]string, len(s))
+	for i := range s {
+		out[i] = f(s[i])
 	}
-	return out, copied
+	return out
 }
 
 func first(hdrs http.Header, k string) ([]string, bool) {
