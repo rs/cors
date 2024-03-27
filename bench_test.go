@@ -2,6 +2,7 @@ package cors
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -88,6 +89,21 @@ func BenchmarkPreflightHeader(b *testing.B) {
 	req.Header.Add(headerOrigin, dummyOrigin)
 	req.Header.Add(headerACRM, http.MethodGet)
 	req.Header.Add(headerACRH, "Accept")
+	handler := Default().Handler(testHandler)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(resps[i], req)
+	}
+}
+
+func BenchmarkPreflightAdversarialACRH(b *testing.B) {
+	resps := makeFakeResponses(b.N)
+	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
+	req.Header.Add(headerACRM, http.MethodGet)
+	req.Header.Add(headerACRH, strings.Repeat(",", 1024))
 	handler := Default().Handler(testHandler)
 
 	b.ReportAllocs()
