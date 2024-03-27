@@ -11,7 +11,9 @@ type wildcard struct {
 }
 
 func (w wildcard) match(s string) bool {
-	return len(s) >= len(w.prefix)+len(w.suffix) && strings.HasPrefix(s, w.prefix) && strings.HasSuffix(s, w.suffix)
+	return len(s) >= len(w.prefix)+len(w.suffix) &&
+		strings.HasPrefix(s, w.prefix) &&
+		strings.HasSuffix(s, w.suffix)
 }
 
 // convert converts a list of string using the passed converter function
