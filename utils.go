@@ -1,6 +1,7 @@
 package cors
 
 import (
+	"net/http"
 	"strings"
 )
 
@@ -13,36 +14,6 @@ type wildcard struct {
 
 func (w wildcard) match(s string) bool {
 	return len(s) >= len(w.prefix)+len(w.suffix) && strings.HasPrefix(s, w.prefix) && strings.HasSuffix(s, w.suffix)
-}
-
-// split compounded header values ["foo, bar", "baz"] -> ["foo", "bar", "baz"]
-func splitHeaderValues(values []string) []string {
-	out := values
-	copied := false
-	for i, v := range values {
-		needsSplit := strings.IndexByte(v, ',') != -1
-		if !copied {
-			if needsSplit {
-				split := strings.Split(v, ",")
-				out = make([]string, i, len(values)+len(split)-1)
-				copy(out, values[:i])
-				for _, s := range split {
-					out = append(out, strings.TrimSpace(s))
-				}
-				copied = true
-			}
-		} else {
-			if needsSplit {
-				split := strings.Split(v, ",")
-				for _, s := range split {
-					out = append(out, strings.TrimSpace(s))
-				}
-			} else {
-				out = append(out, v)
-			}
-		}
-	}
-	return out
 }
 
 // convert converts a list of string using the passed converter function
@@ -69,4 +40,12 @@ func convertDidCopy(s []string, c converter) ([]string, bool) {
 		}
 	}
 	return out, copied
+}
+
+func first(hdrs http.Header, k string) ([]string, bool) {
+	v, found := hdrs[k]
+	if !found || len(v) == 0 {
+		return nil, false
+	}
+	return v[:1], true
 }
