@@ -303,19 +303,19 @@ func TestSpec(t *testing.T) {
 			"AllowedHeaders",
 			Options{
 				AllowedOrigins: []string{"http://foobar.com"},
-				AllowedHeaders: []string{"X-Header-1", "x-header-2"},
+				AllowedHeaders: []string{"X-Header-1", "x-header-2", "X-HEADER-3"},
 			},
 			"OPTIONS",
 			map[string]string{
 				"Origin":                         "http://foobar.com",
 				"Access-Control-Request-Method":  "GET",
-				"Access-Control-Request-Headers": "X-Header-2, X-HEADER-1",
+				"Access-Control-Request-Headers": "x-header-1,x-header-2",
 			},
 			map[string]string{
 				"Vary":                         "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 				"Access-Control-Allow-Origin":  "http://foobar.com",
 				"Access-Control-Allow-Methods": "GET",
-				"Access-Control-Allow-Headers": "X-Header-2, X-Header-1",
+				"Access-Control-Allow-Headers": "x-header-1,x-header-2",
 			},
 			true,
 		},
@@ -329,13 +329,13 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Origin":                         "http://foobar.com",
 				"Access-Control-Request-Method":  "GET",
-				"Access-Control-Request-Headers": "X-Requested-With",
+				"Access-Control-Request-Headers": "x-requested-with",
 			},
 			map[string]string{
 				"Vary":                         "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 				"Access-Control-Allow-Origin":  "http://foobar.com",
 				"Access-Control-Allow-Methods": "GET",
-				"Access-Control-Allow-Headers": "X-Requested-With",
+				"Access-Control-Allow-Headers": "x-requested-with",
 			},
 			true,
 		},
@@ -349,13 +349,13 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Origin":                         "http://foobar.com",
 				"Access-Control-Request-Method":  "GET",
-				"Access-Control-Request-Headers": "X-Header-2, X-HEADER-1",
+				"Access-Control-Request-Headers": "x-header-1,x-header-2",
 			},
 			map[string]string{
 				"Vary":                         "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
 				"Access-Control-Allow-Origin":  "http://foobar.com",
 				"Access-Control-Allow-Methods": "GET",
-				"Access-Control-Allow-Headers": "X-Header-2, X-Header-1",
+				"Access-Control-Allow-Headers": "x-header-1,x-header-2",
 			},
 			true,
 		},
@@ -369,7 +369,7 @@ func TestSpec(t *testing.T) {
 			map[string]string{
 				"Origin":                         "http://foobar.com",
 				"Access-Control-Request-Method":  "GET",
-				"Access-Control-Request-Headers": "X-Header-3, X-Header-1",
+				"Access-Control-Request-Headers": "x-header-1,x-header-3",
 			},
 			map[string]string{
 				"Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
@@ -577,8 +577,8 @@ func TestDefault(t *testing.T) {
 	if !s.allowedOriginsAll {
 		t.Error("c.allowedOriginsAll should be true when Default")
 	}
-	if s.allowedHeaders == nil {
-		t.Error("c.allowedHeaders should be nil when Default")
+	if s.allowedHeaders.Size() == 0 {
+		t.Error("c.allowedHeaders should be empty when Default")
 	}
 	if s.allowedMethods == nil {
 		t.Error("c.allowedMethods should be nil when Default")
@@ -710,64 +710,6 @@ func TestOptionsSuccessStatusCodeOverride(t *testing.T) {
 		s.ServeHTTP(res, req, testHandler)
 		assertResponse(t, res, http.StatusOK)
 	})
-}
-
-func TestCorsAreHeadersAllowed(t *testing.T) {
-	cases := []struct {
-		name             string
-		allowedHeaders   []string
-		requestedHeaders []string
-		want             bool
-	}{
-		{
-			name:             "nil allowedHeaders",
-			allowedHeaders:   nil,
-			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
-			want:             false,
-		},
-		{
-			name:             "star allowedHeaders",
-			allowedHeaders:   []string{"*"},
-			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
-			want:             true,
-		},
-		{
-			name:             "empty reqHeader",
-			allowedHeaders:   nil,
-			requestedHeaders: []string{},
-			want:             true,
-		},
-		{
-			name:             "match allowedHeaders",
-			allowedHeaders:   []string{"Content-Type", "X-PINGOTHER", "X-APP-KEY"},
-			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
-			want:             true,
-		},
-		{
-			name:             "not matched allowedHeaders",
-			allowedHeaders:   []string{"X-PINGOTHER"},
-			requestedHeaders: []string{"X-API-KEY, Content-Type"},
-			want:             false,
-		},
-		{
-			name:             "allowedHeaders should be a superset of requestedHeaders",
-			allowedHeaders:   []string{"X-PINGOTHER"},
-			requestedHeaders: []string{"X-PINGOTHER, Content-Type"},
-			want:             false,
-		},
-	}
-
-	for _, tt := range cases {
-		tt := tt
-
-		t.Run(tt.name, func(t *testing.T) {
-			c := New(Options{AllowedHeaders: tt.allowedHeaders})
-			have := c.areHeadersAllowed(convert(splitHeaderValues(tt.requestedHeaders), http.CanonicalHeaderKey))
-			if have != tt.want {
-				t.Errorf("Cors.areHeadersAllowed() have: %t want: %t", have, tt.want)
-			}
-		})
-	}
 }
 
 func TestAccessControlExposeHeadersPresence(t *testing.T) {
