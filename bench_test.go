@@ -1,7 +1,9 @@
 package cors
 
 import (
+	"math"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -97,6 +99,21 @@ func BenchmarkPreflightHeader(b *testing.B) {
 	}
 }
 
+func BenchmarkPreflightAdversarialACRH(b *testing.B) {
+	resps := makeFakeResponses(b.N)
+	req, _ := http.NewRequest(http.MethodOptions, dummyEndpoint, nil)
+	req.Header.Add(headerOrigin, dummyOrigin)
+	req.Header.Add(headerACRM, http.MethodGet)
+	req.Header[headerACRH] = adversarialACRH
+	handler := Default().Handler(testHandler)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		handler.ServeHTTP(resps[i], req)
+	}
+}
+
 func makeFakeResponses(n int) []*FakeResponse {
 	resps := make([]*FakeResponse, n)
 	for i := 0; i < n; i++ {
@@ -105,4 +122,16 @@ func makeFakeResponses(n int) []*FakeResponse {
 		}}
 	}
 	return resps
+}
+
+var adversarialACRH []string
+
+func init() { // populates adversarialACRH
+	n := int(math.Floor(math.Sqrt(http.DefaultMaxHeaderBytes)))
+	commas := strings.Repeat(",", n)
+	res := make([]string, n)
+	for i := range res {
+		res[i] = commas
+	}
+	adversarialACRH = res
 }
