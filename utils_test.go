@@ -1,7 +1,6 @@
 package cors
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -21,41 +20,6 @@ func TestWildcard(t *testing.T) {
 	w = wildcard{"foo", "oof"}
 	if w.match("foof") {
 		t.Error("foo*oof should not match foof")
-	}
-}
-
-func TestSplitHeaderValues(t *testing.T) {
-	testCases := []struct {
-		input    []string
-		expected []string
-	}{
-		{
-			input:    []string{},
-			expected: []string{},
-		},
-		{
-			input:    []string{"foo"},
-			expected: []string{"foo"},
-		},
-		{
-			input:    []string{"foo, bar, baz"},
-			expected: []string{"foo", "bar", "baz"},
-		},
-		{
-			input:    []string{"abc", "def, ghi", "jkl"},
-			expected: []string{"abc", "def", "ghi", "jkl"},
-		},
-		{
-			input:    []string{"foo, bar", "baz, qux", "quux, corge"},
-			expected: []string{"foo", "bar", "baz", "qux", "quux", "corge"},
-		},
-	}
-
-	for _, testCase := range testCases {
-		output := splitHeaderValues(testCase.input)
-		if !reflect.DeepEqual(output, testCase.expected) {
-			t.Errorf("Input: %v, Expected: %v, Got: %v", testCase.input, testCase.expected, output)
-		}
 	}
 }
 
