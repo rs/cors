@@ -26,6 +26,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/rs/cors/internal"
 )
 
 var headerVaryOrigin = []string{"Origin"}
@@ -111,7 +113,11 @@ type Cors struct {
 	// Optional origin validator function
 	allowOriginFunc func(r *http.Request, origin string) (bool, []string)
 	// Normalized list of allowed headers
-	allowedHeaders []string
+	// Note: the Fetch standard guarantees that CORS-unsafe request-header names
+	// (i.e. the values listed in the Access-Control-Request-Headers header)
+	// are unique and sorted;
+	// see https://fetch.spec.whatwg.org/#cors-unsafe-request-header-names.
+	allowedHeaders internal.SortedSet
 	// Normalized list of allowed methods
 	allowedMethods []string
 	// Pre-computed normalized list of exposed headers
@@ -183,15 +189,19 @@ func New(options Options) *Cors {
 	}
 
 	// Allowed Headers
+	// Note: the Fetch standard guarantees that CORS-unsafe request-header names
+	// (i.e. the values listed in the Access-Control-Request-Headers header)
+	// are lowercase; see https://fetch.spec.whatwg.org/#cors-unsafe-request-header-names.
 	if len(options.AllowedHeaders) == 0 {
 		// Use sensible defaults
-		c.allowedHeaders = []string{"Accept", "Content-Type", "X-Requested-With"}
+		c.allowedHeaders = internal.NewSortedSet("accept", "content-type", "x-requested-with")
 	} else {
-		c.allowedHeaders = convert(options.AllowedHeaders, http.CanonicalHeaderKey)
+		normalized := convert(options.AllowedHeaders, strings.ToLower)
+		c.allowedHeaders = internal.NewSortedSet(normalized...)
 		for _, h := range options.AllowedHeaders {
 			if h == "*" {
 				c.allowedHeadersAll = true
-				c.allowedHeaders = nil
+				c.allowedHeaders = internal.SortedSet{}
 				break
 			}
 		}
@@ -351,10 +361,12 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: method '%s' not allowed", reqMethod)
 		return
 	}
-	reqHeadersRaw := r.Header["Access-Control-Request-Headers"]
-	reqHeaders, reqHeadersEdited := convertDidCopy(splitHeaderValues(reqHeadersRaw), http.CanonicalHeaderKey)
-	if !c.areHeadersAllowed(reqHeaders) {
-		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
+	// Note: the Fetch standard guarantees that at most one
+	// Access-Control-Request-Headers header is present in the preflight request;
+	// see step 5.2 in https://fetch.spec.whatwg.org/#cors-preflight-fetch-0.
+	reqHeaders, found := first(r.Header, "Access-Control-Request-Headers")
+	if found && !c.allowedHeadersAll && !c.allowedHeaders.Subsumes(reqHeaders[0]) {
+		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders[0])
 		return
 	}
 	if c.allowedOriginsAll {
@@ -365,14 +377,10 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
 	headers["Access-Control-Allow-Methods"] = r.Header["Access-Control-Request-Method"]
-	if len(reqHeaders) > 0 {
+	if found && len(reqHeaders[0]) > 0 {
 		// Spec says: Since the list of headers can be unbounded, simply returning supported headers
 		// from Access-Control-Request-Headers can be enough
-		if reqHeadersEdited || len(reqHeaders) != len(reqHeadersRaw) {
-			headers.Set("Access-Control-Allow-Headers", strings.Join(reqHeaders, ", "))
-		} else {
-			headers["Access-Control-Allow-Headers"] = reqHeadersRaw
-		}
+		headers["Access-Control-Allow-Headers"] = reqHeaders
 	}
 	if c.allowCredentials {
 		headers["Access-Control-Allow-Credentials"] = headerTrue
@@ -491,25 +499,4 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		}
 	}
 	return false
-}
-
-// areHeadersAllowed checks if a given list of headers are allowed to used within
-// a cross-domain request.
-func (c *Cors) areHeadersAllowed(requestedHeaders []string) bool {
-	if c.allowedHeadersAll || len(requestedHeaders) == 0 {
-		return true
-	}
-	for _, header := range requestedHeaders {
-		found := false
-		for _, h := range c.allowedHeaders {
-			if h == header {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
 }
