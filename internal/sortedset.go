@@ -20,18 +20,21 @@ type SortedSet struct {
 // but no other elements.
 func NewSortedSet(elems ...string) SortedSet {
 	sort.Strings(elems)
-	elems = compact(elems)
 	m := make(map[string]int)
 	var maxLen int
-	for i, s := range elems {
-		maxLen = max(maxLen, len(s))
+	i := 0
+	for _, s := range elems {
+		if _, exists := m[s]; exists {
+			continue
+		}
 		m[s] = i
+		i++
+		maxLen = max(maxLen, len(s))
 	}
-	res := SortedSet{
+	return SortedSet{
 		m:      m,
 		maxLen: maxLen,
 	}
-	return res
 }
 
 // Size returns the cardinality of set.
@@ -89,29 +92,6 @@ func (set SortedSet) Subsumes(csv string) bool {
 		csv = csv[comma+1:]
 	}
 	return true
-}
-
-// adapted from https://pkg.go.dev/slices#Compact
-// TODO: when updating go directive to 1.21 or later,
-// use slices.Compact instead.
-func compact(s []string) []string {
-	if len(s) < 2 {
-		return s
-	}
-	i := 1
-	for k := 1; k < len(s); k++ {
-		if s[k] != s[k-1] {
-			if i != k {
-				s[i] = s[k]
-			}
-			i++
-		}
-	}
-	// zero/nil out the obsolete elements, for GC
-	for j := i; j < len(s); j++ {
-		s[j] = ""
-	}
-	return s[:i]
 }
 
 // TODO: when updating go directive to 1.21 or later,
