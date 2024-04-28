@@ -16,14 +16,14 @@ type Options = cors.Options
 // about configured 'optionPassthrough' option.
 type corsWrapper struct {
 	*cors.Cors
-	optionPassthrough bool
+	optionsPassthrough bool
 }
 
 // build transforms wrapped cors.Cors handler into Gin middleware.
 func (c corsWrapper) build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		c.HandlerFunc(ctx.Writer, ctx.Request)
-		if !c.optionPassthrough &&
+		if !c.optionsPassthrough &&
 			ctx.Request.Method == http.MethodOptions &&
 			ctx.GetHeader("Access-Control-Request-Method") != "" {
 			// Abort processing next Gin middlewares.
