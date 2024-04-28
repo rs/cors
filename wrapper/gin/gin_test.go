@@ -49,7 +49,25 @@ func TestCorsWrapper_buildAbortsWhenPreflight(t *testing.T) {
 	if !ctx.IsAborted() {
 		t.Error("Should abort on preflight requests")
 	}
-	if res.Code != http.StatusOK {
-		t.Error("Should abort with 200 OK status")
+	if res.Code != http.StatusNoContent {
+		t.Error("Should abort with 204 Non Content status")
+	}
+}
+
+func TestCorsWrapper_buildNotAbortsWhenPassthrough(t *testing.T) {
+	res := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(res)
+	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	ctx.Request.Header.Add("Origin", "http://example.org")
+	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
+
+	handler := New(Options{
+		OptionsPassthrough: true,
+	})
+
+	handler(ctx)
+
+	if ctx.IsAborted() {
+		t.Error("Should not abort when OPTIONS passthrough enabled")
 	}
 }
