@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/cors"
 )
 
 func init() {
@@ -38,22 +37,20 @@ func TestCorsWrapper_buildAbortsWhenPreflight(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	ctx.Request.Header.Add("Origin", "http://example.com/")
+	ctx.Request.Header.Add("Origin", "http://example.org")
 	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
 	ctx.Status(http.StatusAccepted)
 	res.Code = http.StatusAccepted
 
-	handler := corsWrapper{Cors: cors.New(Options{
-		// Intentionally left blank.
-	})}.build()
+	handler := New(Options{ /* Intentionally left blank. */ })
 
 	handler(ctx)
 
 	if !ctx.IsAborted() {
 		t.Error("Should abort on preflight requests")
 	}
-	if res.Code != http.StatusOK {
-		t.Error("Should abort with 200 OK status")
+	if res.Code != http.StatusNoContent {
+		t.Error("Should abort with 204 Non Content status")
 	}
 }
 
@@ -61,12 +58,12 @@ func TestCorsWrapper_buildNotAbortsWhenPassthrough(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	ctx.Request.Header.Add("Origin", "http://example.com/")
+	ctx.Request.Header.Add("Origin", "http://example.org")
 	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
 
-	handler := corsWrapper{cors.New(Options{
+	handler := New(Options{
 		OptionsPassthrough: true,
-	}), true}.build()
+	})
 
 	handler(ctx)
 
