@@ -38,7 +38,7 @@ func TestCorsWrapper_buildAbortsWhenPreflight(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	ctx.Request.Header.Add("Origin", "http://example.com/")
+	ctx.Request.Header.Add("Origin", "http://example.org")
 	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
 	ctx.Status(http.StatusAccepted)
 	res.Code = http.StatusAccepted
@@ -61,7 +61,7 @@ func TestCorsWrapper_buildNotAbortsWhenPassthrough(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(res)
 	ctx.Request, _ = http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	ctx.Request.Header.Add("Origin", "http://example.com/")
+	ctx.Request.Header.Add("Origin", "http://example.org")
 	ctx.Request.Header.Add("Access-Control-Request-Method", "POST")
 
 	handler := corsWrapper{cors.New(Options{
