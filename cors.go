@@ -391,9 +391,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if len(c.maxAge) > 0 {
 		headers["Access-Control-Max-Age"] = c.maxAge
 	}
-	if c.Log != nil {
-		c.logf("  Preflight response headers: %v", headers)
-	}
+	c.logf("  Preflight response headers: %v", headers)
 }
 
 // handleActualRequest handles simple cross-origin requests, actual request or redirects
@@ -440,9 +438,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	if c.allowCredentials {
 		headers["Access-Control-Allow-Credentials"] = headerTrue
 	}
-	if c.Log != nil {
-		c.logf("  Actual response added headers: %v", headers)
-	}
+	c.logf("  Actual response added headers: %v", headers)
 }
 
 // convenience method. checks if a logger is set.
