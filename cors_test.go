@@ -299,6 +299,7 @@ func TestSpec(t *testing.T) {
 			},
 			true,
 		},
+		///
 		{
 			"AllowedHeaders",
 			Options{
@@ -763,4 +764,34 @@ func TestAccessControlExposeHeadersPresence(t *testing.T) {
 		})
 	}
 
+}
+
+func TestFoo(t *testing.T) {
+	const fooHeader = "FOO"
+
+	s := New(Options{
+		AllowedMethods:   []string{http.MethodOptions},
+		AllowedHeaders:   []string{fooHeader},
+		AllowCredentials: true,
+	})
+
+	responseRecorder := httptest.NewRecorder()
+
+	req, _ := http.NewRequest(http.MethodOptions, "https://example.com/foo", nil)
+	req.Header.Add("Origin", "https://example.com/")
+	req.Header.Add("Access-Control-Request-Method", http.MethodOptions)
+	req.Header.Add("Access-Control-Request-Headers", fooHeader)
+
+	s.handlePreflight(responseRecorder, req)
+
+	f := responseRecorder.Result()
+	fmt.Println("headers", f.Header)
+
+	if expected := "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"; f.Header.Get("Vary") != expected {
+		t.Errorf("Vary header expected %q, got %q", expected, f.Header.Get("Vary"))
+	}
+
+	if expected := fooHeader; f.Header.Get("Access-Control-Request-Headers") != expected {
+		t.Errorf("Vary header expected %q, got %q", expected, f.Header.Get("Access-Control-Request-Headers"))
+	}
 }
