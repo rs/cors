@@ -60,6 +60,10 @@ func (set SortedSet) Subsumes(csv string) bool {
 	if csv == "" {
 		return true
 	}
+
+	// probably temporary.
+	csv = strings.ToLower(csv)
+
 	posOfLastNameSeen := -1
 	chunkSize := set.maxLen + 1 // (to accommodate for at least one comma)
 	for {

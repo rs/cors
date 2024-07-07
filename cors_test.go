@@ -763,35 +763,34 @@ func TestAccessControlExposeHeadersPresence(t *testing.T) {
 			})
 		})
 	}
-
 }
 
-func TestFoo(t *testing.T) {
-	const fooHeader = "FOO"
+func Test_CORSPreFlight_NotFailingForCustomACRHeader(t *testing.T) {
+	const apiKeyHeader = "X-Key-Api"
 
-	s := New(Options{
-		AllowedMethods:   []string{http.MethodOptions},
-		AllowedHeaders:   []string{fooHeader},
+	crs := New(Options{
+		AllowedMethods:   []string{http.MethodGet},
+		AllowedHeaders:   []string{apiKeyHeader},
 		AllowCredentials: true,
 	})
 
 	responseRecorder := httptest.NewRecorder()
 
-	req, _ := http.NewRequest(http.MethodOptions, "https://example.com/foo", nil)
-	req.Header.Add("Origin", "https://example.com/")
-	req.Header.Add("Access-Control-Request-Method", http.MethodOptions)
-	req.Header.Add("Access-Control-Request-Headers", fooHeader)
+	req, _ := http.NewRequest(http.MethodOptions, "https://example.com", nil)
+	req.Header.Add("Origin", "https://example.com")
+	req.Header.Add("Access-Control-Request-Method", http.MethodGet)
+	req.Header.Add("Access-Control-Request-Headers", apiKeyHeader)
 
-	s.handlePreflight(responseRecorder, req)
+	crs.handlePreflight(responseRecorder, req)
 
 	f := responseRecorder.Result()
 	fmt.Println("headers", f.Header)
 
-	if expected := "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"; f.Header.Get("Vary") != expected {
+	if expected, actual := "Origin, Access-Control-Request-Method, Access-Control-Request-Headers", f.Header.Get("Vary"); expected != actual {
 		t.Errorf("Vary header expected %q, got %q", expected, f.Header.Get("Vary"))
 	}
 
-	if expected := fooHeader; f.Header.Get("Access-Control-Request-Headers") != expected {
+	if expected, actual := apiKeyHeader, f.Header.Get("Access-Control-Allow-Headers"); expected != actual {
 		t.Errorf("Vary header expected %q, got %q", expected, f.Header.Get("Access-Control-Request-Headers"))
 	}
 }
