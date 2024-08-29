@@ -536,6 +536,46 @@ func TestSpec(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"MultipleACRHHeaders",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+				AllowedHeaders: []string{"Content-Type", "Authorization"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"authorization", "content-type"},
+			},
+			http.Header{
+				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin":  {"http://foobar.com"},
+				"Access-Control-Allow-Methods": {"GET"},
+				"Access-Control-Allow-Headers": {"authorization", "content-type"},
+			},
+			true,
+		},
+		{
+			"MultipleACRHHeadersWithOWSAndEmptyElements",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+				AllowedHeaders: []string{"Content-Type", "Authorization"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"authorization\t", " ", " content-type"},
+			},
+			http.Header{
+				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin":  {"http://foobar.com"},
+				"Access-Control-Allow-Methods": {"GET"},
+				"Access-Control-Allow-Headers": {"authorization\t", " ", " content-type"},
+			},
+			true,
+		},
 	}
 	for i := range cases {
 		tc := cases[i]
