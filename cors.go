@@ -367,7 +367,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	// However, some gateways split that header into multiple headers of the same name;
 	// see https://github.com/rs/cors/issues/184.
 	reqHeaders, found := r.Header["Access-Control-Request-Headers"]
-	if found && !c.allowedHeadersAll && !c.allowedHeaders.Subsumes(reqHeaders) {
+	if found && !c.allowedHeadersAll && !c.allowedHeaders.Accepts(reqHeaders) {
 		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
 		return
 	}

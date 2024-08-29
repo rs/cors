@@ -10,17 +10,17 @@ func TestSortedSet(t *testing.T) {
 		desc  string
 		elems []string
 		// expectations
-		size       int
-		combined   string
-		slice      []string
-		subsets    [][]string
-		notSubsets [][]string
+		size     int
+		combined string
+		slice    []string
+		accepted [][]string
+		rejected [][]string
 	}{
 		{
 			desc:     "empty set",
 			size:     0,
 			combined: "",
-			subsets: [][]string{
+			accepted: [][]string{
 				// some empty elements, possibly with OWS
 				{""},
 				{","},
@@ -28,7 +28,7 @@ func TestSortedSet(t *testing.T) {
 				// multiple field lines, some empty elements
 				make([]string, maxEmptyElements),
 			},
-			notSubsets: [][]string{
+			rejected: [][]string{
 				{"x-bar"},
 				{"x-bar,x-foo"},
 				// too many empty elements
@@ -42,7 +42,7 @@ func TestSortedSet(t *testing.T) {
 			size:     1,
 			combined: "x-foo",
 			slice:    []string{"X-Foo"},
-			subsets: [][]string{
+			accepted: [][]string{
 				{"x-foo"},
 				// some empty elements, possibly with OWS
 				{""},
@@ -55,7 +55,7 @@ func TestSortedSet(t *testing.T) {
 				append(make([]string, maxEmptyElements), "x-foo"),
 				make([]string, maxEmptyElements),
 			},
-			notSubsets: [][]string{
+			rejected: [][]string{
 				{"x-bar"},
 				{"x-bar,x-foo"},
 				// too much OWS
@@ -77,7 +77,7 @@ func TestSortedSet(t *testing.T) {
 			size:     3,
 			combined: "x-bar,x-baz,x-foo",
 			slice:    []string{"X-Bar", "X-Baz", "X-Foo"},
-			subsets: [][]string{
+			accepted: [][]string{
 				{"x-bar"},
 				{"x-baz"},
 				{"x-foo"},
@@ -104,7 +104,7 @@ func TestSortedSet(t *testing.T) {
 				append(make([]string, maxEmptyElements), "x-bar", "x-foo"),
 				make([]string, maxEmptyElements),
 			},
-			notSubsets: [][]string{
+			rejected: [][]string{
 				{"x-qux"},
 				{"x-bar,x-baz,x-baz"},
 				{"x-qux,x-baz"},
@@ -132,7 +132,7 @@ func TestSortedSet(t *testing.T) {
 			size:     2,
 			combined: "x-bar,x-foo",
 			slice:    []string{"X-Bar", "X-Foo"},
-			subsets: [][]string{
+			accepted: [][]string{
 				{"x-bar"},
 				{"x-foo"},
 				{"x-bar,x-foo"},
@@ -154,7 +154,7 @@ func TestSortedSet(t *testing.T) {
 				append(make([]string, maxEmptyElements), "x-bar", "x-foo"),
 				make([]string, maxEmptyElements),
 			},
-			notSubsets: [][]string{
+			rejected: [][]string{
 				{"x-qux"},
 				{"x-qux,x-bar"},
 				{"x-qux,x-foo"},
@@ -192,16 +192,16 @@ func TestSortedSet(t *testing.T) {
 				const tmpl = "NewSortedSet(%#v...).String(): got %q; want %q"
 				t.Errorf(tmpl, elems, combined, tc.combined)
 			}
-			for _, sub := range tc.subsets {
-				if !set.Subsumes(sub) {
-					const tmpl = "%q is not a subset of %q, but should be"
-					t.Errorf(tmpl, set, sub)
+			for _, a := range tc.accepted {
+				if !set.Accepts(a) {
+					const tmpl = "%q rejects %q, but should accept it"
+					t.Errorf(tmpl, set, a)
 				}
 			}
-			for _, notSub := range tc.notSubsets {
-				if set.Subsumes(notSub) {
-					const tmpl = "%q is a subset of %q, but should not be"
-					t.Errorf(tmpl, set, notSub)
+			for _, r := range tc.rejected {
+				if set.Accepts(r) {
+					const tmpl = "%q accepts %q, but should reject it"
+					t.Errorf(tmpl, set, r)
 				}
 			}
 		}

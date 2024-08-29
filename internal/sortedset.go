@@ -52,12 +52,12 @@ func (set SortedSet) String() string {
 	return strings.Join(elems, ",")
 }
 
-// Subsumes reports whether values is a sequence of list-based field values
+// Accepts reports whether values is a sequence of list-based field values
 // whose elements are
 //   - all members of set,
 //   - sorted in lexicographical order,
 //   - unique.
-func (set SortedSet) Subsumes(values []string) bool {
+func (set SortedSet) Accepts(values []string) bool {
 	var ( // effectively constant
 		maxLen = maxOWSBytes + set.maxLen + maxOWSBytes + 1 // +1 for comma
 	)
