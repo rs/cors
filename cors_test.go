@@ -265,18 +265,18 @@ func TestSpec(t *testing.T) {
 		{
 			"MaxAge",
 			Options{
-				AllowedOrigins: []string{"http://example.com/"},
+				AllowedOrigins: []string{"http://example.com"},
 				AllowedMethods: []string{"GET"},
 				MaxAge:         10,
 			},
 			"OPTIONS",
 			http.Header{
-				"Origin":                        {"http://example.com/"},
+				"Origin":                        {"http://example.com"},
 				"Access-Control-Request-Method": {"GET"},
 			},
 			http.Header{
 				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
-				"Access-Control-Allow-Origin":  {"http://example.com/"},
+				"Access-Control-Allow-Origin":  {"http://example.com"},
 				"Access-Control-Allow-Methods": {"GET"},
 				"Access-Control-Max-Age":       {"10"},
 			},
@@ -285,18 +285,18 @@ func TestSpec(t *testing.T) {
 		{
 			"MaxAgeNegative",
 			Options{
-				AllowedOrigins: []string{"http://example.com/"},
+				AllowedOrigins: []string{"http://example.com"},
 				AllowedMethods: []string{"GET"},
 				MaxAge:         -1,
 			},
 			"OPTIONS",
 			http.Header{
-				"Origin":                        {"http://example.com/"},
+				"Origin":                        {"http://example.com"},
 				"Access-Control-Request-Method": {"GET"},
 			},
 			http.Header{
 				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
-				"Access-Control-Allow-Origin":  {"http://example.com/"},
+				"Access-Control-Allow-Origin":  {"http://example.com"},
 				"Access-Control-Allow-Methods": {"GET"},
 				"Access-Control-Max-Age":       {"0"},
 			},
@@ -630,7 +630,7 @@ func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 	})
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "http://example.com/")
+	req.Header.Add("Origin", "http://example.com")
 
 	s.handlePreflight(res, req)
 
@@ -657,7 +657,7 @@ func TestHandleActualRequestInvalidOriginAbortion(t *testing.T) {
 	})
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "http://example.com/")
+	req.Header.Add("Origin", "http://example.com")
 
 	s.handleActualRequest(res, req)
 
@@ -673,7 +673,7 @@ func TestHandleActualRequestInvalidMethodAbortion(t *testing.T) {
 	})
 	res := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-	req.Header.Add("Origin", "http://example.com/")
+	req.Header.Add("Origin", "http://example.com")
 
 	s.handleActualRequest(res, req)
 
