@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -37,11 +38,11 @@ func assertHeaders(t *testing.T, resHeaders http.Header, expHeaders http.Header)
 	for name, listBased := range allRespHeaders {
 		got := resHeaders[name]
 		want := expHeaders[name]
-		if !listBased && !slicesEqual(got, want) {
+		if !listBased && !slices.Equal(got, want) {
 			t.Errorf("Response header %q = %q, want %q", name, got, want)
 			continue
 		}
-		if listBased && !slicesEqual(normalize(got), normalize(want)) {
+		if listBased && !slices.Equal(normalize(got), normalize(want)) {
 			t.Errorf("Response header %q = %q, want %q", name, got, want)
 			continue
 		}
@@ -58,20 +59,6 @@ func normalize(s []string) (res []string) {
 		}
 	}
 	return
-}
-
-// TODO: when updating go directive to 1.21 or later,
-// use slices.Equal instead.
-func slicesEqual(s1, s2 []string) bool {
-	if len(s1) != len(s2) {
-		return false
-	}
-	for i := range s1 {
-		if s1[i] != s2[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func assertResponse(t *testing.T, res *httptest.ResponseRecorder, responseCode int) {
