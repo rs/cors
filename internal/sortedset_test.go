@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -180,7 +181,7 @@ func TestSortedSet(t *testing.T) {
 	}
 	for _, tc := range cases {
 		f := func(t *testing.T) {
-			elems := clone(tc.elems)
+			elems := slices.Clone(tc.elems)
 			set := NewSortedSet(tc.elems...)
 			size := set.Size()
 			if set.Size() != tc.size {
@@ -207,12 +208,4 @@ func TestSortedSet(t *testing.T) {
 		}
 		t.Run(tc.desc, f)
 	}
-}
-
-// adapted from https://pkg.go.dev/slices#Clone
-// TODO: when updating go directive to 1.21 or later,
-// use slices.Clone instead.
-func clone(s []string) []string {
-	// The s[:0:0] preserves nil in case it matters.
-	return append(s[:0:0], s...)
 }

@@ -181,21 +181,3 @@ func trimRightOWS(s string, n int) (string, bool) {
 	}
 	return s, true
 }
-
-// TODO: when updating go directive to 1.21 or later,
-// use min builtin instead.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// TODO: when updating go directive to 1.21 or later,
-// use max builtin instead.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
