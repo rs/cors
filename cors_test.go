@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -829,4 +830,60 @@ func TestAccessControlExposeHeadersPresence(t *testing.T) {
 		})
 	}
 
+}
+
+var mutatingHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	for _, k := range keys {
+		vv := w.Header()[k]
+		if len(vv) > 0 {
+			vv[0] = "oops!"
+		}
+	}
+})
+
+var keys = []string{
+	"Access-Control-Allow-Credentials",
+	"Access-Control-Allow-Origin",
+	"Vary",
+}
+
+// Note: run this test with -race
+func TestSynchronizationBugWithPrelightRequest(t *testing.T) {
+	testSynchronizationBug(t, true)
+}
+
+// Note: run this test with -race
+func TestSynchronizationBugWithActualRequest(t *testing.T) {
+	testSynchronizationBug(t, false)
+}
+
+func testSynchronizationBug(t *testing.T, preflight bool) {
+	t.Helper()
+	c := New(Options{
+		AllowedOrigins:     []string{"*"},
+		AllowCredentials:   true,
+		AllowedMethods:     []string{http.MethodPut},
+		OptionsPassthrough: true,
+	})
+	var req *http.Request
+	if preflight {
+		req = httptest.NewRequest(http.MethodOptions, "https://example.org", nil)
+		req.Header.Add("Access-Control-Request-Method", http.MethodPut)
+	} else {
+		req = httptest.NewRequest(http.MethodGet, "https://example.org", nil)
+	}
+	req.Header.Add("Origin", "https://example.com")
+
+	// simulate concurrent requests
+	const n = 128
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for range n {
+		go func() {
+			defer wg.Done()
+			rec := httptest.NewRecorder()
+			c.Handler(mutatingHandler).ServeHTTP(rec, req)
+		}()
+	}
+	wg.Wait()
 }
