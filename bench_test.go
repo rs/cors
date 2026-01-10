@@ -115,7 +115,7 @@ func BenchmarkPreflightAdversarialACRH(b *testing.B) {
 
 func makeFakeResponses(n int) []*FakeResponse {
 	resps := make([]*FakeResponse, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		resps[i] = &FakeResponse{http.Header{
 			"Content-Type": []string{"text/plain"},
 		}}
