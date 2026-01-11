@@ -24,15 +24,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/rs/cors/internal"
 )
 
-var headerVaryOrigin = []string{"Origin"}
-var headerOriginAll = []string{"*"}
-var headerTrue = []string{"true"}
+var (
+	headerVaryOrigin = []string{"Origin"}
+	headerOriginAll  = []string{"*"}
+	headerTrue       = []string{"true"}
+)
 
 // Options is a configuration container to setup the CORS middleware.
 type Options struct {
@@ -99,7 +102,7 @@ type Options struct {
 
 // Logger generic interface for logger
 type Logger interface {
-	Printf(string, ...interface{})
+	Printf(string, ...any)
 }
 
 // Cors http handler
@@ -178,9 +181,9 @@ func New(options Options) *Cors {
 				c.allowedOrigins = nil
 				c.allowedWOrigins = nil
 				break
-			} else if i := strings.IndexByte(origin, '*'); i >= 0 {
+			} else if prefix, suffix, ok := strings.Cut(origin, "*"); ok {
 				// Split the origin in two: start and end string without the *
-				w := wildcard{origin[0:i], origin[i+1:]}
+				w := wildcard{prefix, suffix}
 				c.allowedWOrigins = append(c.allowedWOrigins, w)
 			} else {
 				c.allowedOrigins = append(c.allowedOrigins, origin)
@@ -198,12 +201,9 @@ func New(options Options) *Cors {
 	} else {
 		normalized := convert(options.AllowedHeaders, strings.ToLower)
 		c.allowedHeaders = internal.NewSortedSet(normalized...)
-		for _, h := range options.AllowedHeaders {
-			if h == "*" {
-				c.allowedHeadersAll = true
-				c.allowedHeaders = internal.SortedSet{}
-				break
-			}
+		if slices.Contains(options.AllowedHeaders, "*") {
+			c.allowedHeadersAll = true
+			c.allowedHeaders = internal.SortedSet{}
 		}
 	}
 
@@ -444,7 +444,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // convenience method. checks if a logger is set.
-func (c *Cors) logf(format string, a ...interface{}) {
+func (c *Cors) logf(format string, a ...any) {
 	if c.Log != nil {
 		c.Log.Printf(format, a...)
 	}
@@ -467,17 +467,12 @@ func (c *Cors) isOriginAllowed(r *http.Request, origin string) (allowed bool, va
 		return true, nil
 	}
 	origin = strings.ToLower(origin)
-	for _, o := range c.allowedOrigins {
-		if o == origin {
-			return true, nil
-		}
+	if slices.Contains(c.allowedOrigins, origin) {
+		return true, nil
 	}
-	for _, w := range c.allowedWOrigins {
-		if w.match(origin) {
-			return true, nil
-		}
-	}
-	return false, nil
+	return slices.ContainsFunc(c.allowedWOrigins, func(w wildcard) bool {
+		return w.match(origin)
+	}), nil
 }
 
 // isMethodAllowed checks if a given method can be used as part of a cross-domain request
@@ -491,10 +486,5 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		// Always allow preflight requests
 		return true
 	}
-	for _, m := range c.allowedMethods {
-		if m == method {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.allowedMethods, method)
 }

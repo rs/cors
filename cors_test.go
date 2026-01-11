@@ -616,7 +616,7 @@ type testLogger struct {
 	buf *bytes.Buffer
 }
 
-func (l *testLogger) Printf(format string, v ...interface{}) {
+func (l *testLogger) Printf(format string, v ...any) {
 	fmt.Fprintf(l.buf, format, v...)
 }
 
