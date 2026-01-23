@@ -62,7 +62,7 @@ Please refer to [#55](https://github.com/rs/cors/issues/55) for more information
 * `net/http`: [examples/nethttp/server.go](https://github.com/rs/cors/blob/master/examples/nethttp/server.go)
 * [Goji](https://goji.io): [examples/goji/server.go](https://github.com/rs/cors/blob/master/examples/goji/server.go)
 * [Martini](https://github.com/go-martini/martini): [examples/martini/server.go](https://github.com/rs/cors/blob/master/examples/martini/server.go)
-* [Negroni](https://github.com/codegangsta/negroni): [examples/negroni/server.go](https://github.com/rs/cors/blob/master/examples/negroni/server.go)
+* [Negroni](https://github.com/urfave/negroni): [examples/negroni/server.go](https://github.com/rs/cors/blob/master/examples/negroni/server.go)
 * [Alice](https://github.com/justinas/alice): [examples/alice/server.go](https://github.com/rs/cors/blob/master/examples/alice/server.go)
 * [HttpRouter](https://github.com/julienschmidt/httprouter): [examples/httprouter/server.go](https://github.com/rs/cors/blob/master/examples/httprouter/server.go)
 * [Gorilla](http://www.gorillatoolkit.org/pkg/mux): [examples/gorilla/server.go](https://github.com/rs/cors/blob/master/examples/gorilla/server.go)
