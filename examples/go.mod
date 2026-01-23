@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/codegangsta/negroni v1.0.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-chi/chi v1.5.5
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-martini/martini v0.0.0-20170121215854-22fa46961aab
 	github.com/gobuffalo/buffalo v1.1.0
 	github.com/gorilla/mux v1.8.1
