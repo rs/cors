@@ -666,18 +666,6 @@ func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 	})
 }
 
-func TestHandlePreflightNoOptionsAbortion(t *testing.T) {
-	s := New(Options{
-		// Intentionally left blank.
-	})
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
-
-	s.handlePreflight(res, req)
-
-	assertHeaders(t, res.Header(), http.Header{})
-}
-
 func TestHandleActualRequestInvalidOriginAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedOrigins: []string{"http://foo.com"},
