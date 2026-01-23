@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/codegangsta/negroni"
+	"github.com/urfave/negroni/v3"
 	"github.com/rs/cors"
 )
 
