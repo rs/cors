@@ -16,7 +16,7 @@ func main() {
 	m.Use(c.HandlerFunc)
 
 	m.Get("/", func(r render.Render) {
-		r.JSON(200, map[string]interface{}{"hello": "world"})
+		r.JSON(200, map[string]any{"hello": "world"})
 	})
 
 	m.Run()
