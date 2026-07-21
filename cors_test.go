@@ -115,11 +115,26 @@ func TestSpec(t *testing.T) {
 				"Origin": {"http://foobar.com"},
 			},
 			http.Header{
-				"Vary":                             {"Origin"},
-				"Access-Control-Allow-Origin":      {"*"},
-				"Access-Control-Allow-Credentials": {"true"},
+				// "*" is ignored when credentials are enabled (#55/#197)
+				"Vary": {"Origin"},
 			},
-			true,
+			false,
+		},
+		{
+			"WildcardOriginWithCredentials",
+			Options{
+				AllowedOrigins:   []string{"h*"},
+				AllowCredentials: true,
+			},
+			"GET",
+			http.Header{
+				"Origin": {"https://evil.example.com"},
+			},
+			http.Header{
+				// Wildcard origins are ignored when credentials are enabled (#197)
+				"Vary": {"Origin"},
+			},
+			false,
 		},
 		{
 			"AllowedOrigin",

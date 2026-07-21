@@ -44,6 +44,9 @@ type Options struct {
 	// An origin may contain a wildcard (*) to replace 0 or more characters
 	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penalty.
 	// Only one wildcard can be used per origin.
+	// When AllowCredentials is true, neither "*" nor wildcard origins are permitted
+	// (they are ignored with a log message) because reflecting arbitrary origins
+	// with credentials is insecure (#55, #197).
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowOriginFunc is a custom function to validate the origin. It take the
@@ -176,12 +179,22 @@ func New(options Options) *Cors {
 			// As it may error prone, we chose to ignore the spec here.
 			origin = strings.ToLower(origin)
 			if origin == "*" {
+				// "*" with credentials would reflect any origin; refuse that combination.
+				if c.allowCredentials {
+					c.logf("Insecure setup: AllowedOrigins cannot contain '*' when AllowCredentials is true; ignoring '*'")
+					continue
+				}
 				// If "*" is present in the list, turn the whole list into a match all
 				c.allowedOriginsAll = true
 				c.allowedOrigins = nil
 				c.allowedWOrigins = nil
 				break
 			} else if prefix, suffix, ok := strings.Cut(origin, "*"); ok {
+				// Wildcard origins + credentials can still reflect near-arbitrary origins (#197)
+				if c.allowCredentials {
+					c.logf("Insecure setup: AllowedOrigins cannot contain wildcard patterns when AllowCredentials is true; ignoring %q", origin)
+					continue
+				}
 				// Split the origin in two: start and end string without the *
 				w := wildcard{prefix, suffix}
 				c.allowedWOrigins = append(c.allowedWOrigins, w)
