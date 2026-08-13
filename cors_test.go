@@ -635,6 +635,72 @@ func TestLogger(t *testing.T) {
 	}
 }
 
+func TestDeniedRequestLogsQuoteUntrustedValues(t *testing.T) {
+	tests := []struct {
+		name       string
+		preflight  bool
+		method     string
+		origin     string
+		reqMethod  string
+		wantLogged string
+	}{
+		{
+			name:       "preflight origin",
+			preflight:  true,
+			method:     http.MethodOptions,
+			origin:     `https://example.com' is allowed`,
+			reqMethod:  http.MethodGet,
+			wantLogged: `  Preflight aborted: origin "https://example.com' is allowed" not allowed`,
+		},
+		{
+			name:       "preflight method",
+			preflight:  true,
+			method:     http.MethodOptions,
+			origin:     "https://example.com",
+			reqMethod:  `GET' is allowed`,
+			wantLogged: `  Preflight aborted: method "GET' is allowed" not allowed`,
+		},
+		{
+			name:       "actual origin",
+			method:     http.MethodGet,
+			origin:     `https://example.com' is allowed`,
+			wantLogged: `  Actual request no headers added: origin "https://example.com' is allowed" not allowed`,
+		},
+		{
+			name:       "actual method",
+			method:     `GET' is allowed`,
+			origin:     "https://example.com",
+			wantLogged: `  Actual request no headers added: method "GET' is allowed" not allowed`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &testLogger{buf: &bytes.Buffer{}}
+			s := New(Options{
+				AllowedOrigins: []string{"https://example.com"},
+				AllowedMethods: []string{http.MethodPost},
+				Logger:         logger,
+			})
+			res := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "https://server.example", nil)
+			req.Method = tt.method
+			req.Header.Set("Origin", tt.origin)
+			req.Header.Set("Access-Control-Request-Method", tt.reqMethod)
+
+			if tt.preflight {
+				s.handlePreflight(res, req)
+			} else {
+				s.handleActualRequest(res, req)
+			}
+
+			if got := logger.buf.String(); got != tt.wantLogged {
+				t.Errorf("log = %q, want %q", got, tt.wantLogged)
+			}
+		})
+	}
+}
+
 func TestDefault(t *testing.T) {
 	s := Default()
 	if s.Log != nil {
