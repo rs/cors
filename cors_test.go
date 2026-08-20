@@ -816,5 +816,31 @@ func TestAccessControlExposeHeadersPresence(t *testing.T) {
 			})
 		})
 	}
-
 }
+
+func TestAllowAll(t *testing.T) {
+	c := AllowAll()
+	if !c.allowedOriginsAll {
+		t.Error("AllowAll should set allowedOriginsAll to true")
+	}
+	if !c.allowedHeadersAll {
+		t.Error("AllowAll should set allowedHeadersAll to true")
+	}
+
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com")
+	req.Header.Add("Access-Control-Request-Method", "PUT")
+	req.Header.Add("Access-Control-Request-Headers", "X-Custom-Header")
+
+	res := httptest.NewRecorder()
+	c.Handler(testHandler).ServeHTTP(res, req)
+
+	assertHeaders(t, res.Header(), http.Header{
+		"Access-Control-Allow-Origin":  {"*"},
+		"Access-Control-Allow-Methods": {"PUT"},
+		"Access-Control-Allow-Headers": {"X-Custom-Header"},
+		"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+	})
+	assertResponse(t, res, http.StatusNoContent)
+}
+
