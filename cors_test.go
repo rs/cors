@@ -681,6 +681,40 @@ func TestHandleActualRequestInvalidOriginAbortion(t *testing.T) {
 	})
 }
 
+func TestCredentialedWildcardOriginIsRejected(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins:   []string{"h*"},
+		AllowCredentials: true,
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://localhost/foo", nil)
+	req.Header.Set("Origin", "https://evil.example.com")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), http.Header{
+		"Vary": {"Origin"},
+	})
+}
+
+func TestCredentialedExactOriginRemainsAllowed(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins:   []string{"https://trusted.example.com"},
+		AllowCredentials: true,
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://localhost/foo", nil)
+	req.Header.Set("Origin", "https://trusted.example.com")
+
+	s.handleActualRequest(res, req)
+
+	assertHeaders(t, res.Header(), http.Header{
+		"Vary":                             {"Origin"},
+		"Access-Control-Allow-Origin":      {"https://trusted.example.com"},
+		"Access-Control-Allow-Credentials": {"true"},
+	})
+}
+
 func TestHandleActualRequestInvalidMethodAbortion(t *testing.T) {
 	s := New(Options{
 		AllowedMethods:   []string{"POST"},

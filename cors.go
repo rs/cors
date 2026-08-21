@@ -466,6 +466,12 @@ func (c *Cors) isOriginAllowed(r *http.Request, origin string) (allowed bool, va
 	if slices.Contains(c.allowedOrigins, origin) {
 		return true, nil
 	}
+	// Wildcard patterns can reflect near-arbitrary origins when credentials
+	// are enabled (for example, "h*"). Exact origins remain supported above,
+	// while credentialed wildcard reflection is rejected.
+	if c.allowCredentials {
+		return false, nil
+	}
 	return slices.ContainsFunc(c.allowedWOrigins, func(w wildcard) bool {
 		return w.match(origin)
 	}), nil
