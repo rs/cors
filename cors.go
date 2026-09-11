@@ -478,9 +478,8 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		// If no method allowed, always return false, even for preflight request
 		return false
 	}
-	if method == http.MethodOptions {
-		// Always allow preflight requests
-		return true
-	}
+	// OPTIONS is only allowed when explicitly configured. Preflight handling
+	// still occurs in handlePreflight when Access-Control-Request-Method is set;
+	// actual (non-preflight) OPTIONS must be listed in AllowedMethods (#196).
 	return slices.Contains(c.allowedMethods, method)
 }

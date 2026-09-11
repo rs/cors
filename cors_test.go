@@ -500,6 +500,22 @@ func TestSpec(t *testing.T) {
 			http.Header{
 				"Origin": {"http://foobar.com"},
 			},
+			// Actual OPTIONS is not allowed unless listed in AllowedMethods (#196).
+			http.Header{
+				"Vary": {"Origin"},
+			},
+			true,
+		},
+		{
+			"NonPreflightOptionsAllowed",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+				AllowedMethods: []string{"OPTIONS", "GET"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin": {"http://foobar.com"},
+			},
 			http.Header{
 				"Vary":                        {"Origin"},
 				"Access-Control-Allow-Origin": {"http://foobar.com"},
@@ -707,12 +723,16 @@ func TestIsMethodAllowedReturnsFalseWithNoMethods(t *testing.T) {
 	}
 }
 
-func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
+func TestIsMethodAllowedReturnsFalseForOptionsUnlessConfigured(t *testing.T) {
 	s := New(Options{
-		// Intentionally left blank.
+		// Intentionally left blank (defaults to GET/POST/HEAD).
 	})
+	if s.isMethodAllowed("OPTIONS") {
+		t.Error("IsMethodAllowed should return false for OPTIONS unless explicitly allowed")
+	}
+	s = New(Options{AllowedMethods: []string{"OPTIONS", "GET"}})
 	if !s.isMethodAllowed("OPTIONS") {
-		t.Error("IsMethodAllowed should return true when c.allowedMethods is nil.")
+		t.Error("IsMethodAllowed should return true when OPTIONS is configured")
 	}
 }
 
