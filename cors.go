@@ -44,8 +44,9 @@ type Options struct {
 	// An origin may contain a wildcard (*) to replace 0 or more characters
 	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penalty.
 	// Only one wildcard can be used per origin.
-	// Wildcard patterns require "null" or a nonempty scheme://authority, with no
-	// userinfo, path, query, fragment, backslash, or ASCII whitespace in the authority.
+	// Request origins matched by wildcard patterns must be "null" or a nonempty
+	// scheme://authority, with no userinfo, path, query, fragment, backslash, or
+	// ASCII whitespace in the authority.
 	// This structural check does not apply to exact matches or the special "*".
 	// Default value is ["*"]
 	AllowedOrigins []string
