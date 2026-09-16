@@ -44,6 +44,9 @@ type Options struct {
 	// An origin may contain a wildcard (*) to replace 0 or more characters
 	// (i.e.: http://*.domain.com). Usage of wildcards implies a small performance penalty.
 	// Only one wildcard can be used per origin.
+	// Wildcard patterns require "null" or a nonempty scheme://authority, with no
+	// userinfo, path, query, fragment, backslash, or ASCII whitespace in the authority.
+	// This structural check does not apply to exact matches or the special "*".
 	// Default value is ["*"]
 	AllowedOrigins []string
 	// AllowOriginFunc is a custom function to validate the origin. It take the
@@ -465,6 +468,17 @@ func (c *Cors) isOriginAllowed(r *http.Request, origin string) (allowed bool, va
 	origin = strings.ToLower(origin)
 	if slices.Contains(c.allowedOrigins, origin) {
 		return true, nil
+	}
+	if len(c.allowedWOrigins) == 0 {
+		return false, nil
+	}
+	if origin != "null" {
+		scheme, authority, ok := strings.Cut(origin, "://")
+		// A serialized origin has no URL components after its host and port.
+		// In particular, another origin's "://" cannot be part of the authority.
+		if !ok || scheme == "" || authority == "" || strings.ContainsAny(authority, "/\\?#@ \t\r\n\f\v") {
+			return false, nil
+		}
 	}
 	return slices.ContainsFunc(c.allowedWOrigins, func(w wildcard) bool {
 		return w.match(origin)
