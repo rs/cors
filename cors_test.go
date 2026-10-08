@@ -612,6 +612,90 @@ func TestDebug(t *testing.T) {
 	}
 }
 
+func TestPreflightRequestHeaderFields(t *testing.T) {
+	cases := []struct {
+		name    string
+		values  []string
+		want    []string
+		present bool
+		denied  bool
+	}{
+		{name: "leading_empty", values: []string{"", "authorization", "content-type"}, want: []string{"", "authorization", "content-type"}, present: true},
+		{name: "leading_empties", values: []string{"", "", "authorization"}, want: []string{"", "", "authorization"}, present: true},
+		{name: "nonempty", values: []string{"authorization"}, want: []string{"authorization"}, present: true},
+		{name: "empty", values: []string{""}, present: true},
+		{name: "all_empty", values: []string{"", ""}, present: true},
+		{name: "absent"},
+		{name: "nil", present: true},
+		{name: "empty_slice", values: []string{}, present: true},
+		{name: "denied_later", values: []string{"", "x-denied"}, want: []string{"", "x-denied"}, present: true, denied: true},
+	}
+	for _, wildcard := range []bool{false, true} {
+		name := "explicit"
+		allowedHeaders := []string{"Authorization", "Content-Type"}
+		if wildcard {
+			name = "wildcard"
+			allowedHeaders = []string{"*"}
+		}
+		t.Run(name, func(t *testing.T) {
+			s := New(Options{AllowedHeaders: allowedHeaders})
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					req := httptest.NewRequest(http.MethodOptions, "http://example.com/", nil)
+					req.Header.Set("Origin", "http://foobar.com")
+					req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+					if tc.present {
+						req.Header["Access-Control-Request-Headers"] = tc.values
+					}
+					res := httptest.NewRecorder()
+					s.Handler(testHandler).ServeHTTP(res, req)
+					assertResponse(t, res, http.StatusNoContent)
+
+					want := http.Header{
+						"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+					}
+					if !tc.denied || wildcard {
+						want["Access-Control-Allow-Origin"] = []string{"*"}
+						want["Access-Control-Allow-Methods"] = []string{http.MethodGet}
+						if tc.want != nil {
+							want["Access-Control-Allow-Headers"] = tc.want
+						}
+					}
+					assertHeaders(t, res.Header(), want)
+				})
+			}
+		})
+	}
+}
+
+func TestPreflightEmptyLeadingHeaderOverHTTP(t *testing.T) {
+	for _, allowedHeaders := range [][]string{{"Authorization"}, {"*"}} {
+		t.Run(allowedHeaders[0], func(t *testing.T) {
+			s := httptest.NewServer(New(Options{AllowedHeaders: allowedHeaders}).Handler(testHandler))
+			defer s.Close()
+			req, err := http.NewRequest(http.MethodOptions, s.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Origin", "http://foobar.com")
+			req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+			req.Header["Access-Control-Request-Headers"] = []string{"", "authorization"}
+			res, err := s.Client().Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer res.Body.Close()
+			if res.StatusCode != http.StatusNoContent {
+				t.Errorf("Status = %d, want %d", res.StatusCode, http.StatusNoContent)
+			}
+			want := []string{"", "authorization"}
+			if got := res.Header.Values("Access-Control-Allow-Headers"); !slices.Equal(got, want) {
+				t.Errorf("Access-Control-Allow-Headers = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
 type testLogger struct {
 	buf *bytes.Buffer
 }

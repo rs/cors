@@ -375,10 +375,13 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
 	headers["Access-Control-Allow-Methods"] = r.Header["Access-Control-Request-Method"]
-	if found && len(reqHeaders[0]) > 0 {
-		// Spec says: Since the list of headers can be unbounded, simply returning supported headers
-		// from Access-Control-Request-Headers can be enough
-		headers["Access-Control-Allow-Headers"] = reqHeaders
+	for _, reqHeader := range reqHeaders {
+		if reqHeader != "" {
+			// Spec says: Since the list of headers can be unbounded, simply returning supported headers
+			// from Access-Control-Request-Headers can be enough
+			headers["Access-Control-Allow-Headers"] = reqHeaders
+			break
+		}
 	}
 	if c.allowCredentials {
 		headers["Access-Control-Allow-Credentials"] = headerTrue
