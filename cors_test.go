@@ -602,6 +602,304 @@ func TestSpec(t *testing.T) {
 	}
 }
 
+func TestWildcardOriginStructure(t *testing.T) {
+	cases := []struct {
+		name    string
+		pattern string
+		origin  string
+		allowed bool
+	}{
+		{"CommaSeparated", "https://*.example.com", "https://github.com,https://test.example.com", false},
+		{"CommaSpaceSeparated", "https://*.example.com", "https://github.com, https://test.example.com", false},
+		{"SpaceSeparated", "https://*.example.com", "https://github.com https://test.example.com", false},
+		{"ThreeOrigins", "https://*.example.com", "https://a.example.com,https://b.example.com,https://c.example.com", false},
+		{"MissingScheme", "*://example.com", "://example.com", false},
+		{"MissingSeparator", "example.*", "example.com", false},
+		{"MissingAuthority", "https://*", "https://", false},
+		{"Userinfo", "https://*.example.com", "https://user@foo.example.com", false},
+		{"Path", "https://*.example.com", "https://other.com/foo.example.com", false},
+		{"Query", "https://*.example.com", "https://other.com?foo.example.com", false},
+		{"Fragment", "https://*.example.com", "https://other.com#foo.example.com", false},
+		{"Backslash", "https://*.example.com", `https://other.com\foo.example.com`, false},
+		{"Space", "https://*.example.com", "https://foo .example.com", false},
+		{"Tab", "https://*.example.com", "https://foo\t.example.com", false},
+		{"CR", "https://*.example.com", "https://foo\r.example.com", false},
+		{"LF", "https://*.example.com", "https://foo\n.example.com", false},
+		{"FormFeed", "https://*.example.com", "https://foo\f.example.com", false},
+		{"VerticalTab", "https://*.example.com", "https://foo\v.example.com", false},
+		{"Host", "https://*.example.com", "https://foo.example.com", true},
+		{"NestedHost", "https://*.example.com", "https://foo.bar.example.com", true},
+		{"EmptySubstitution", "https://foo*.example.com", "https://foo.example.com", true},
+		{"Case", "HTTPS://*.EXAMPLE.COM", "HTTPS://Foo.Example.COM", true},
+		{"Port", "https://*.example.com:8443", "https://foo.example.com:8443", true},
+		{"DefaultPort", "https://*.example.com:443", "https://foo.example.com:443", true},
+		{"IPv4", "http://127.*:8080", "http://127.0.0.1:8080", true},
+		{"IPv6", "http://[2001:db8::*]", "http://[2001:db8::1]", true},
+		{"IPv6Port", "http://[::1]:*", "http://[::1]:8080", true},
+		{"Punycode", "https://*.example.com", "https://xn--maraa-rta.example.com", true},
+		{"TrailingDot", "https://*.example.com.", "https://foo.example.com.", true},
+		{"CustomScheme", "my-app://*.example.com", "my-app://foo.example.com", true},
+		{"CommaHost", "https://*.example.com", "https://foo,bar.example.com", true},
+		{"Null", "n*", "null", true},
+		{"WrongScheme", "https://*.example.com", "http://foo.example.com", false},
+		{"WrongHost", "https://*.example.com", "https://foo.other.com", false},
+		{"WrongPort", "https://*.example.com:8443", "https://foo.example.com:443", false},
+		{"NoDefaultPortNormalization", "https://*.example.com", "https://foo.example.com:443", false},
+		{"NoTrailingDotNormalization", "https://*.example.com", "https://foo.example.com.", false},
+		{"Empty", "https://*.example.com", "", false},
+	}
+	for _, tc := range cases {
+		for _, credentials := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/credentials=%t", tc.name, credentials), func(t *testing.T) {
+				c := New(Options{AllowedOrigins: []string{tc.pattern}, AllowCredentials: credentials})
+				want := http.Header{}
+				if tc.allowed {
+					want.Set("Access-Control-Allow-Origin", tc.origin)
+					if credentials {
+						want.Set("Access-Control-Allow-Credentials", "true")
+					}
+				}
+				testOriginHandlers(t, c, tc.origin, tc.allowed, want)
+			})
+		}
+	}
+}
+
+func testOriginHandlers(t *testing.T, c *Cors, origin string, allowed bool, want http.Header) {
+	t.Helper()
+	for _, method := range []string{http.MethodGet, http.MethodOptions} {
+		t.Run(method, func(t *testing.T) {
+			req := httptest.NewRequest(method, "http://example.com/foo", nil)
+			if origin != "" {
+				req.Header.Set("Origin", origin)
+			}
+			expected := want.Clone()
+			vary := "Origin"
+			if method == http.MethodOptions {
+				req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+				vary = "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+				if expected.Get("Access-Control-Allow-Origin") != "" {
+					expected.Set("Access-Control-Allow-Methods", http.MethodGet)
+				}
+			}
+			expected["Vary"] = append([]string{vary}, expected["Vary"]...)
+			if got := c.OriginAllowed(req); got != allowed {
+				t.Errorf("OriginAllowed = %t, want %t", got, allowed)
+			}
+			for _, entry := range []string{"Handler", "HandlerFunc", "Negroni"} {
+				t.Run(entry, func(t *testing.T) {
+					res := httptest.NewRecorder()
+					calls := 0
+					next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						calls++
+						testHandler(w, r)
+					})
+					switch entry {
+					case "Handler":
+						c.Handler(next).ServeHTTP(res, req)
+					case "HandlerFunc":
+						c.HandlerFunc(res, req)
+					case "Negroni":
+						c.ServeHTTP(res, req, next)
+					}
+					assertHeaders(t, res.Header(), expected)
+					status, wantCalls := http.StatusOK, 0
+					if method == http.MethodOptions {
+						status = http.StatusNoContent
+					} else if entry != "HandlerFunc" {
+						wantCalls = 1
+					}
+					assertResponse(t, res, status)
+					if calls != wantCalls {
+						t.Errorf("next calls = %d, want %d", calls, wantCalls)
+					}
+					if wantCalls == 1 && !bytes.Equal(res.Body.Bytes(), testResponse) {
+						t.Errorf("body = %q, want %q", res.Body.Bytes(), testResponse)
+					}
+					if wantCalls == 0 && res.Body.Len() != 0 {
+						t.Errorf("unexpected response body: %q", res.Body.Bytes())
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestOriginStructureOverrides(t *testing.T) {
+	const origin = "HTTPS://github.com,https://test.example.com"
+	for _, exact := range []string{origin, "custom origin", "null", ""} {
+		t.Run("Exact/"+exact, func(t *testing.T) {
+			c := New(Options{AllowedOrigins: []string{"https://*.example.com", exact}})
+			want := http.Header{}
+			if exact != "" {
+				want.Set("Access-Control-Allow-Origin", exact)
+			}
+			testOriginHandlers(t, c, exact, true, want)
+		})
+	}
+	for _, name := range []string{"Default", "Star", "MixedStar", "Credentials", "AllowAll"} {
+		t.Run(name, func(t *testing.T) {
+			var c *Cors
+			switch name {
+			case "Default":
+				c = Default()
+			case "Star":
+				c = New(Options{AllowedOrigins: []string{"*"}})
+			case "MixedStar":
+				c = New(Options{AllowedOrigins: []string{"https://*.example.com", "*"}})
+			case "Credentials":
+				c = New(Options{AllowedOrigins: []string{"*"}, AllowCredentials: true})
+			case "AllowAll":
+				c = AllowAll()
+			}
+			want := http.Header{"Access-Control-Allow-Origin": {"*"}}
+			if name == "Credentials" {
+				want.Set("Access-Control-Allow-Credentials", "true")
+			}
+			testOriginHandlers(t, c, origin, true, want)
+			testOriginHandlers(t, c, "", true, http.Header{})
+		})
+	}
+	for _, kind := range []string{"Origin", "Request", "VaryRequest"} {
+		for _, allowed := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/allowed=%t", kind, allowed), func(t *testing.T) {
+				calls := 0
+				callbackOrigin := origin
+				options := Options{AllowedOrigins: []string{"*"}, AllowCredentials: true}
+				check := func(o string) {
+					t.Helper()
+					calls++
+					if o != callbackOrigin {
+						t.Errorf("callback origin = %q, want %q", o, callbackOrigin)
+					}
+				}
+				options.AllowOriginFunc = func(o string) bool {
+					if kind != "Origin" {
+						t.Error("lower-priority callback called")
+					}
+					check(o)
+					return allowed
+				}
+				var lastRequest *http.Request
+				if kind != "Origin" {
+					options.AllowOriginRequestFunc = func(r *http.Request, o string) bool {
+						if kind != "Request" {
+							t.Error("lower-priority callback called")
+						}
+						check(o)
+						lastRequest = r
+						return allowed
+					}
+				}
+				if kind == "VaryRequest" {
+					options.AllowOriginVaryRequestFunc = func(r *http.Request, o string) (bool, []string) {
+						check(o)
+						lastRequest = r
+						return allowed, []string{"authorization"}
+					}
+				}
+				c := New(options)
+				req := httptest.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+				req.Header.Set("Origin", origin)
+				if got := c.OriginAllowed(req); got != allowed {
+					t.Errorf("OriginAllowed = %t, want %t", got, allowed)
+				}
+				if kind != "Origin" && lastRequest != req {
+					t.Error("callback did not receive the original request")
+				}
+				want := http.Header{}
+				if allowed {
+					want.Set("Access-Control-Allow-Origin", origin)
+					want.Set("Access-Control-Allow-Credentials", "true")
+				}
+				if kind == "VaryRequest" {
+					want.Set("Vary", "Authorization")
+				}
+				testOriginHandlers(t, c, origin, allowed, want)
+				if calls != 9 {
+					t.Errorf("callback calls = %d, want 9", calls)
+				}
+				callbackOrigin, calls = "", 0
+				want = http.Header{}
+				if kind == "VaryRequest" {
+					want.Set("Vary", "Authorization")
+				}
+				testOriginHandlers(t, c, "", allowed, want)
+				if calls != 8 {
+					t.Errorf("empty-origin callback calls = %d, want 8", calls)
+				}
+			})
+		}
+	}
+}
+
+func TestWildcardOriginOptions(t *testing.T) {
+	for _, allowed := range []bool{false, true} {
+		for _, passthrough := range []bool{false, true} {
+			t.Run(fmt.Sprintf("allowed=%t/passthrough=%t", allowed, passthrough), func(t *testing.T) {
+				c := New(Options{
+					AllowedOrigins:       []string{"https://*.example.com"},
+					AllowedHeaders:       []string{"X-Test"},
+					ExposedHeaders:       []string{"X-Response"},
+					AllowCredentials:     true,
+					AllowPrivateNetwork:  true,
+					MaxAge:               60,
+					OptionsPassthrough:   passthrough,
+					OptionsSuccessStatus: http.StatusAccepted,
+				})
+				for _, method := range []string{http.MethodGet, http.MethodOptions} {
+					req := httptest.NewRequest(method, "http://example.com/foo", nil)
+					origin := "https://foo.example.com"
+					if !allowed {
+						origin = "https://other.com," + origin
+					}
+					req.Header.Set("Origin", origin)
+					want := http.Header{"Vary": {"Origin"}}
+					if allowed {
+						want.Set("Access-Control-Allow-Origin", origin)
+						want.Set("Access-Control-Allow-Credentials", "true")
+						want.Set("Access-Control-Expose-Headers", "X-Response")
+					}
+					status, wantCalls := http.StatusOK, 1
+					if method == http.MethodOptions {
+						req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+						req.Header.Set("Access-Control-Request-Headers", "x-test")
+						req.Header.Set("Access-Control-Request-Private-Network", "true")
+						want.Set("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Access-Control-Request-Private-Network")
+						want.Del("Access-Control-Expose-Headers")
+						if allowed {
+							want.Set("Access-Control-Allow-Methods", http.MethodGet)
+							want.Set("Access-Control-Allow-Headers", "x-test")
+							want.Set("Access-Control-Allow-Private-Network", "true")
+							want.Set("Access-Control-Max-Age", "60")
+						}
+						if !passthrough {
+							status, wantCalls = http.StatusAccepted, 0
+						}
+					}
+					for _, entry := range []string{"Handler", "Negroni"} {
+						res, calls := httptest.NewRecorder(), 0
+						next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							calls++
+							testHandler(w, r)
+						})
+						if entry == "Handler" {
+							c.Handler(next).ServeHTTP(res, req)
+						} else {
+							c.ServeHTTP(res, req, next)
+						}
+						assertHeaders(t, res.Header(), want)
+						assertResponse(t, res, status)
+						if calls != wantCalls {
+							t.Errorf("%s %s next calls = %d, want %d", entry, method, calls, wantCalls)
+						}
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestDebug(t *testing.T) {
 	s := New(Options{
 		Debug: true,
