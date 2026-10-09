@@ -3,7 +3,6 @@ module github.com/rs/cors/examples
 go 1.22.2
 
 require (
-	github.com/codegangsta/negroni v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi v1.5.5
 	github.com/go-martini/martini v0.0.0-20170121215854-22fa46961aab
@@ -14,6 +13,7 @@ require (
 	github.com/martini-contrib/render v0.0.0-20150707142108-ec18f8345a11
 	github.com/rs/cors v1.11.0
 	github.com/rs/cors/wrapper/gin v0.0.0-20240428121854-85fc0cac7b03
+	github.com/urfave/negroni/v3 v3.1.1
 	github.com/zenazn/goji v1.0.1
 )
 
