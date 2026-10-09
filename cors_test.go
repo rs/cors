@@ -719,6 +719,169 @@ func TestLogger(t *testing.T) {
 	}
 }
 
+func TestLogSanitization(t *testing.T) {
+	t.Run("PreflightDisallowedOriginWithNewlines", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"http://example.com"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+		maliciousOrigin := "http://evil.com\r\n[cors] Injected log entry"
+		req.Header["Origin"] = []string{maliciousOrigin}
+		req.Header["Access-Control-Request-Method"] = []string{"GET"}
+
+		res := httptest.NewRecorder()
+		s.handlePreflight(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("origin %q not allowed", maliciousOrigin)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+		if strings.Contains(output, "\r") || strings.Contains(output, "\n") {
+			t.Errorf("output contains unescaped carriage return or newline: %q", output)
+		}
+	})
+
+	t.Run("PreflightDisallowedOriginQuoteInjection", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"https://example.com"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+		maliciousOrigin := "https://example.com' is not allowed with credentials. To fix this, list 'h*' as an allowed origin (with credentials). For security, leave '*"
+		req.Header["Origin"] = []string{maliciousOrigin}
+		req.Header["Access-Control-Request-Method"] = []string{"GET"}
+
+		res := httptest.NewRecorder()
+		s.handlePreflight(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("origin %q not allowed", maliciousOrigin)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+	})
+
+	t.Run("PreflightDisallowedMethodWithNewlines", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"http://example.com"},
+			AllowedMethods: []string{"GET"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+		maliciousMethod := "DELETE\r\n[cors] Injected log entry"
+		req.Header["Origin"] = []string{"http://example.com"}
+		req.Header["Access-Control-Request-Method"] = []string{maliciousMethod}
+
+		res := httptest.NewRecorder()
+		s.handlePreflight(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("method %q not allowed", maliciousMethod)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+		if strings.Contains(output, "\r") || strings.Contains(output, "\n") {
+			t.Errorf("output contains unescaped carriage return or newline: %q", output)
+		}
+	})
+
+	t.Run("ActualRequestDisallowedOriginWithNewlines", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"http://example.com"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+		maliciousOrigin := "http://evil.com\r\n[cors] Injected log entry"
+		req.Header["Origin"] = []string{maliciousOrigin}
+
+		res := httptest.NewRecorder()
+		s.handleActualRequest(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("origin %q not allowed", maliciousOrigin)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+		if strings.Contains(output, "\r") || strings.Contains(output, "\n") {
+			t.Errorf("output contains unescaped carriage return or newline: %q", output)
+		}
+	})
+
+	t.Run("ActualRequestDisallowedOriginQuoteInjection", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"https://example.com"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+		maliciousOrigin := "https://example.com' is not allowed with credentials. To fix this, list 'h*' as an allowed origin (with credentials). For security, leave '*"
+		req.Header["Origin"] = []string{maliciousOrigin}
+
+		res := httptest.NewRecorder()
+		s.handleActualRequest(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("origin %q not allowed", maliciousOrigin)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+	})
+
+	t.Run("ActualRequestDisallowedMethodWithNewlines", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"http://example.com"},
+			AllowedMethods: []string{"GET"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("POST", "http://example.com/foo", nil)
+		maliciousMethod := "CUSTOM\r\n[cors] Injected log entry"
+		req.Method = maliciousMethod
+		req.Header["Origin"] = []string{"http://example.com"}
+
+		res := httptest.NewRecorder()
+		s.handleActualRequest(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("method %q not allowed", maliciousMethod)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+		if strings.Contains(output, "\r") || strings.Contains(output, "\n") {
+			t.Errorf("output contains unescaped carriage return or newline: %q", output)
+		}
+	})
+
+	t.Run("HandlerMiddlewareEndToEnd", func(t *testing.T) {
+		logger := &testLogger{buf: &bytes.Buffer{}}
+		s := New(Options{
+			AllowedOrigins: []string{"http://example.com"},
+			Logger:         logger,
+		})
+		req, _ := http.NewRequest("GET", "http://example.com/foo", nil)
+		maliciousOrigin := "http://evil.com\r\n[cors] Injected log entry"
+		req.Header["Origin"] = []string{maliciousOrigin}
+
+		res := httptest.NewRecorder()
+		s.Handler(testHandler).ServeHTTP(res, req)
+
+		output := logger.buf.String()
+		expected := fmt.Sprintf("origin %q not allowed", maliciousOrigin)
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected output to contain %q, got %q", expected, output)
+		}
+		if strings.Contains(output, "\r") || strings.Contains(output, "\n") {
+			t.Errorf("output contains unescaped carriage return or newline: %q", output)
+		}
+	})
+}
+
 func TestDefault(t *testing.T) {
 	s := Default()
 	if s.Log != nil {
