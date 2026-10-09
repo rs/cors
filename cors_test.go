@@ -364,6 +364,79 @@ func TestSpec(t *testing.T) {
 			true,
 		},
 		{
+			"DefaultAllowedHeadersAccept",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"accept"},
+			},
+			http.Header{
+				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin":  {"http://foobar.com"},
+				"Access-Control-Allow-Methods": {"GET"},
+				"Access-Control-Allow-Headers": {"accept"},
+			},
+			true,
+		},
+		{
+			"DefaultAllowedHeadersContentType",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"content-type"},
+			},
+			http.Header{
+				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin":  {"http://foobar.com"},
+				"Access-Control-Allow-Methods": {"GET"},
+				"Access-Control-Allow-Headers": {"content-type"},
+			},
+			true,
+		},
+		{
+			"DefaultAllowedHeadersCombined",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"accept, content-type, x-requested-with"},
+			},
+			http.Header{
+				"Vary":                         {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin":  {"http://foobar.com"},
+				"Access-Control-Allow-Methods": {"GET"},
+				"Access-Control-Allow-Headers": {"accept, content-type, x-requested-with"},
+			},
+			true,
+		},
+		{
+			"DefaultDisallowedHeaders",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"OPTIONS",
+			http.Header{
+				"Origin":                         {"http://foobar.com"},
+				"Access-Control-Request-Method":  {"GET"},
+				"Access-Control-Request-Headers": {"authorization"},
+			},
+			http.Header{
+				"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+			},
+			true,
+		},
+		{
 			"AllowedWildcardHeader",
 			Options{
 				AllowedOrigins: []string{"http://foobar.com"},
@@ -728,10 +801,94 @@ func TestDefault(t *testing.T) {
 		t.Error("c.allowedOriginsAll should be true when Default")
 	}
 	if s.allowedHeaders.Size() == 0 {
-		t.Error("c.allowedHeaders should be empty when Default")
+		t.Error("c.allowedHeaders should not be empty when Default")
+	}
+	if want := "accept,content-type,x-requested-with"; s.allowedHeaders.String() != want {
+		t.Errorf("c.allowedHeaders.String() = %q; want %q", s.allowedHeaders.String(), want)
 	}
 	if s.allowedMethods == nil {
 		t.Error("c.allowedMethods should be nil when Default")
+	}
+}
+
+func TestDefaultAllowedHeadersMatching(t *testing.T) {
+	cases := []struct {
+		name          string
+		options       Options
+		reqHeaders    string
+		expectAllowed bool
+	}{
+		{
+			name:          "default options accept header",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "accept",
+			expectAllowed: true,
+		},
+		{
+			name:          "default options content-type header",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "content-type",
+			expectAllowed: true,
+		},
+		{
+			name:          "default options x-requested-with header",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "x-requested-with",
+			expectAllowed: true,
+		},
+		{
+			name:          "default options all default headers",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "accept, content-type, x-requested-with",
+			expectAllowed: true,
+		},
+		{
+			name:          "explicit empty slice all default headers",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}, AllowedHeaders: []string{}},
+			reqHeaders:    "accept, content-type, x-requested-with",
+			expectAllowed: true,
+		},
+		{
+			name:          "default options disallowed authorization header",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "authorization",
+			expectAllowed: false,
+		},
+		{
+			name:          "default options disallowed mixed headers",
+			options:       Options{AllowedOrigins: []string{"http://example.com"}},
+			reqHeaders:    "accept, authorization",
+			expectAllowed: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := New(tc.options)
+			req := httptest.NewRequest(http.MethodOptions, "http://example.com/", nil)
+			req.Header.Set("Origin", "http://example.com")
+			req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+			req.Header.Set("Access-Control-Request-Headers", tc.reqHeaders)
+
+			res := httptest.NewRecorder()
+			s.Handler(testHandler).ServeHTTP(res, req)
+
+			if tc.expectAllowed {
+				if got := res.Header().Get("Access-Control-Allow-Headers"); got != tc.reqHeaders {
+					t.Errorf("Access-Control-Allow-Headers = %q; want %q", got, tc.reqHeaders)
+				}
+				if got := res.Header().Get("Access-Control-Allow-Origin"); got != "http://example.com" {
+					t.Errorf("Access-Control-Allow-Origin = %q; want %q", got, "http://example.com")
+				}
+			} else {
+				if got := res.Header().Get("Access-Control-Allow-Headers"); got != "" {
+					t.Errorf("Access-Control-Allow-Headers = %q; want empty", got)
+				}
+				if got := res.Header().Get("Access-Control-Allow-Origin"); got != "" {
+					t.Errorf("Access-Control-Allow-Origin = %q; want empty", got)
+				}
+			}
+		})
 	}
 }
 
