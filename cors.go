@@ -31,10 +31,10 @@ import (
 	"github.com/rs/cors/internal"
 )
 
-var (
-	headerVaryOrigin = []string{"Origin"}
-	headerOriginAll  = []string{"*"}
-	headerTrue       = []string{"true"}
+const (
+	headerOriginAllValue  = "*"
+	headerTrueValue       = "true"
+	headerVaryOriginValue = "Origin"
 )
 
 // Options is a configuration container to setup the CORS middleware.
@@ -336,7 +336,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if vary, found := headers["Vary"]; found {
 		headers["Vary"] = append(vary, c.preflightVary[0])
 	} else {
-		headers["Vary"] = c.preflightVary
+		headers["Vary"] = []string{c.preflightVary[0]}
 	}
 	allowed, additionalVaryHeaders := c.isOriginAllowed(r, origin)
 	if len(additionalVaryHeaders) > 0 {
@@ -368,7 +368,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if c.allowedOriginsAll {
-		headers["Access-Control-Allow-Origin"] = headerOriginAll
+		headers["Access-Control-Allow-Origin"] = []string{headerOriginAllValue}
 	} else {
 		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
 	}
@@ -384,13 +384,13 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if c.allowCredentials {
-		headers["Access-Control-Allow-Credentials"] = headerTrue
+		headers["Access-Control-Allow-Credentials"] = []string{headerTrueValue}
 	}
 	if c.allowPrivateNetwork && r.Header.Get("Access-Control-Request-Private-Network") == "true" {
-		headers["Access-Control-Allow-Private-Network"] = headerTrue
+		headers["Access-Control-Allow-Private-Network"] = []string{headerTrueValue}
 	}
 	if len(c.maxAge) > 0 {
-		headers["Access-Control-Max-Age"] = c.maxAge
+		headers["Access-Control-Max-Age"] = []string{c.maxAge[0]}
 	}
 	c.logf("  Preflight response headers: %v", headers)
 }
@@ -404,9 +404,9 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Always set Vary, see https://github.com/rs/cors/issues/10
 	if vary := headers["Vary"]; vary == nil {
-		headers["Vary"] = headerVaryOrigin
+		headers["Vary"] = []string{headerVaryOriginValue}
 	} else {
-		headers["Vary"] = append(vary, headerVaryOrigin[0])
+		headers["Vary"] = append(vary, headerVaryOriginValue)
 	}
 	if len(additionalVaryHeaders) > 0 {
 		headers.Add("Vary", strings.Join(convert(additionalVaryHeaders, http.CanonicalHeaderKey), ", "))
@@ -429,15 +429,15 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if c.allowedOriginsAll {
-		headers["Access-Control-Allow-Origin"] = headerOriginAll
+		headers["Access-Control-Allow-Origin"] = []string{headerOriginAllValue}
 	} else {
 		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
 	}
 	if len(c.exposedHeaders) > 0 {
-		headers["Access-Control-Expose-Headers"] = c.exposedHeaders
+		headers["Access-Control-Expose-Headers"] = []string{c.exposedHeaders[0]}
 	}
 	if c.allowCredentials {
-		headers["Access-Control-Allow-Credentials"] = headerTrue
+		headers["Access-Control-Allow-Credentials"] = []string{headerTrueValue}
 	}
 	c.logf("  Actual response added headers: %v", headers)
 }
