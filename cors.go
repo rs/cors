@@ -449,15 +449,14 @@ func (c *Cors) logf(format string, a ...any) {
 	}
 }
 
-// check the Origin of a request. No origin at all is also allowed.
+// check the Origin of a request against the configured allowlist.
+//
+// A request without an Origin header has no origin to match, so this
+// reports false. Use it where an Origin is expected, such as Gorilla
+// WebSocket's CheckOrigin; the middleware itself still lets an
+// origin-less request through.
 func (c *Cors) OriginAllowed(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
-	if origin == "" {
-		// Same as the middleware, a request without an Origin header is
-		// not subject to CORS and is allowed through regardless of the
-		// configuration.
-		return true
-	}
 	allowed, _ := c.isOriginAllowed(r, origin)
 	return allowed
 }
