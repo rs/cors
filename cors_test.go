@@ -90,6 +90,18 @@ func TestSpec(t *testing.T) {
 			true,
 		},
 		{
+			"NoOriginHeader",
+			Options{
+				AllowedOrigins: []string{"http://foobar.com"},
+			},
+			"GET",
+			http.Header{},
+			http.Header{
+				"Vary": {"Origin"},
+			},
+			true,
+		},
+		{
 			"MatchAllOrigin",
 			Options{
 				AllowedOrigins: []string{"*"},
