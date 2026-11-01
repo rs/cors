@@ -99,7 +99,7 @@ func TestSpec(t *testing.T) {
 			http.Header{
 				"Vary": {"Origin"},
 			},
-			true,
+			false,
 		},
 		{
 			"MatchAllOrigin",
