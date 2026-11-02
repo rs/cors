@@ -348,13 +348,13 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !allowed {
-		c.logf("  Preflight aborted: origin '%s' not allowed", origin)
+		c.logf("  Preflight aborted: origin %q not allowed", origin)
 		return
 	}
 
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
 	if !c.isMethodAllowed(reqMethod) {
-		c.logf("  Preflight aborted: method '%s' not allowed", reqMethod)
+		c.logf("  Preflight aborted: method %q not allowed", reqMethod)
 		return
 	}
 	// Note: the Fetch standard guarantees that at most one
@@ -416,7 +416,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !allowed {
-		c.logf("  Actual request no headers added: origin '%s' not allowed", origin)
+		c.logf("  Actual request no headers added: origin %q not allowed", origin)
 		return
 	}
 
@@ -425,7 +425,7 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	// spec doesn't instruct to check the allowed methods for simple cross-origin requests.
 	// We think it's a nice feature to be able to have control on those methods though.
 	if !c.isMethodAllowed(r.Method) {
-		c.logf("  Actual request no headers added: method '%s' not allowed", r.Method)
+		c.logf("  Actual request no headers added: method %q not allowed", r.Method)
 		return
 	}
 	if c.allowedOriginsAll {
