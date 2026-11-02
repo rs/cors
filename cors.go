@@ -270,6 +270,10 @@ func AllowAll() *Cors {
 // Handler apply the CORS specification on the request, and add relevant CORS headers
 // as necessary.
 func (c *Cors) Handler(h http.Handler) http.Handler {
+	if c == nil {
+		panic("cors: nil *Cors")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			c.logf("Handler: Preflight request")
