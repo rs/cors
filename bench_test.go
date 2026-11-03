@@ -113,6 +113,33 @@ func BenchmarkPreflightAdversarialACRH(b *testing.B) {
 	}
 }
 
+func BenchmarkWildcardOrigin(b *testing.B) {
+	for _, tc := range []struct {
+		name    string
+		pattern string
+		origin  string
+	}{
+		{"match", "https://*.example.com", "https://foo.example.com"},
+		{"miss", "https://*.example.com", "https://foo.other.com"},
+		{"malformed", "https://*.example.com", "https://other.com,https://foo.example.com"},
+		{"null", "n*", "null"},
+		{"IPv6", "http://[::1]:*", "http://[::1]:8080"},
+	} {
+		b.Run(tc.name, func(b *testing.B) {
+			resps := makeFakeResponses(b.N)
+			req, _ := http.NewRequest(http.MethodGet, dummyEndpoint, nil)
+			req.Header.Set(headerOrigin, tc.origin)
+			handler := New(Options{AllowedOrigins: []string{tc.pattern}}).Handler(testHandler)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				handler.ServeHTTP(resps[i], req)
+			}
+		})
+	}
+}
+
 func makeFakeResponses(n int) []*FakeResponse {
 	resps := make([]*FakeResponse, n)
 	for i := range n {
