@@ -71,7 +71,7 @@ type Options struct {
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests.
 	// If the special "*" value is present in the list, all headers will be allowed.
-	// Default value is [].
+	// Default value is ["Accept", "Content-Type", "X-Requested-With"].
 	AllowedHeaders []string
 	// ExposedHeaders indicates which headers are safe to expose to the API of a CORS
 	// API specification
