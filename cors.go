@@ -46,13 +46,13 @@ type Options struct {
 	// Only one wildcard can be used per origin.
 	// Default value is ["*"]
 	AllowedOrigins []string
-	// AllowOriginFunc is a custom function to validate the origin. It take the
+	// AllowOriginFunc is a custom function to validate the origin. It takes the
 	// origin as argument and returns true if allowed or false otherwise. If
 	// this option is set, the content of `AllowedOrigins` is ignored.
 	AllowOriginFunc func(origin string) bool
 	// AllowOriginRequestFunc is a custom function to validate the origin. It
 	// takes the HTTP Request object and the origin as argument and returns true
-	// if allowed or false otherwise. If headers are used take the decision,
+	// if allowed or false otherwise. If headers are used to make the decision,
 	// consider using AllowOriginVaryRequestFunc instead. If this option is set,
 	// the contents of `AllowedOrigins`, `AllowOriginFunc` are ignored.
 	//
@@ -60,7 +60,7 @@ type Options struct {
 	AllowOriginRequestFunc func(r *http.Request, origin string) bool
 	// AllowOriginVaryRequestFunc is a custom function to validate the origin.
 	// It takes the HTTP Request object and the origin as argument and returns
-	// true if allowed or false otherwise with a list of headers used to take
+	// true if allowed or false otherwise with a list of headers used to make
 	// that decision if any so they can be added to the Vary header. If this
 	// option is set, the contents of `AllowedOrigins`, `AllowOriginFunc` and
 	// `AllowOriginRequestFunc` are ignored.
@@ -227,7 +227,7 @@ func New(options Options) *Cors {
 		c.exposedHeaders = []string{strings.Join(convert(options.ExposedHeaders, http.CanonicalHeaderKey), ", ")}
 	}
 
-	// Pre-compute prefight Vary header to save allocations
+	// Pre-compute preflight Vary header to save allocations
 	if c.allowPrivateNetwork {
 		c.preflightVary = []string{"Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Access-Control-Request-Private-Network"}
 	} else {
@@ -249,7 +249,7 @@ func Default() *Cors {
 	return New(Options{})
 }
 
-// AllowAll create a new Cors handler with permissive configuration allowing all
+// AllowAll creates a new Cors handler with permissive configuration allowing all
 // origins with all standard methods with any header and credentials.
 func AllowAll() *Cors {
 	return New(Options{
@@ -267,7 +267,7 @@ func AllowAll() *Cors {
 	})
 }
 
-// Handler apply the CORS specification on the request, and add relevant CORS headers
+// Handler applies the CORS specification on the request, and add relevant CORS headers
 // as necessary.
 func (c *Cors) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
