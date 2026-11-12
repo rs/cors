@@ -273,6 +273,9 @@ func (c *Cors) Handler(h http.Handler) http.Handler {
 	if c == nil {
 		panic("cors: nil *Cors")
 	}
+	if h == nil {
+		panic("cors: nil http.Handler")
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {

@@ -27,6 +27,16 @@ func TestHandlerPanicsForNilCors(t *testing.T) {
 	c.Handler(testHandler)
 }
 
+func TestHandlerPanicsForNilHandler(t *testing.T) {
+	defer func() {
+		if got := recover(); got != "cors: nil http.Handler" {
+			t.Fatalf("Handler panic = %v, want %q", got, "cors: nil http.Handler")
+		}
+	}()
+
+	AllowAll().Handler(nil)
+}
+
 // For each key-value pair of this map, the value indicates whether the key
 // is a list-based field (i.e. not a singleton field);
 // see https://httpwg.org/specs/rfc9110.html#abnf.extension.
