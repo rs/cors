@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -913,4 +914,108 @@ func TestAccessControlExposeHeadersPresence(t *testing.T) {
 		})
 	}
 
+}
+
+func TestVaryHeaderNoDuplicate(t *testing.T) {
+	c := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Set("Origin", "http://foo.com")
+
+	res := httptest.NewRecorder()
+	// Downstream or previous middleware already set Vary: Origin
+	res.Header().Set("Vary", "Origin")
+	c.Handler(testHandler).ServeHTTP(res, req)
+
+	vary := res.Header()["Vary"]
+	originCount := 0
+	for _, v := range vary {
+		if v == "Origin" {
+			originCount++
+		}
+	}
+	if originCount > 1 {
+		t.Errorf("expected at most 1 'Origin' in Vary header, got %d (vary: %v)", originCount, vary)
+	}
+}
+
+func TestVaryHeaderConcurrencyAndMutation(t *testing.T) {
+	c := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+
+	handler := c.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Downstream handler appends to Vary
+		w.Header().Add("Vary", "Accept-Encoding")
+		w.Header().Add("Vary", "User-Agent")
+	}))
+
+	var wg sync.WaitGroup
+	for i := 0; i < 30; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 10; j++ {
+				req, _ := http.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+				req.Header.Set("Origin", "http://foo.com")
+				res := httptest.NewRecorder()
+				handler.ServeHTTP(res, req)
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+func TestMultipleOriginHeadersInRequest(t *testing.T) {
+	c := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://foo.com")
+	req.Header.Add("Origin", "http://bar.com")
+
+	res := httptest.NewRecorder()
+	c.Handler(testHandler).ServeHTTP(res, req)
+
+	allowOrigin := res.Header()["Access-Control-Allow-Origin"]
+	if len(allowOrigin) != 1 {
+		t.Fatalf("expected exactly 1 Access-Control-Allow-Origin value, got %v", allowOrigin)
+	}
+	if allowOrigin[0] != "http://foo.com" {
+		t.Errorf("expected Access-Control-Allow-Origin to be 'http://foo.com', got %q", allowOrigin[0])
+	}
+}
+
+func TestAllowedMethodsCaseInsensitive(t *testing.T) {
+	c := New(Options{
+		AllowedOrigins: []string{"http://foo.com"},
+		AllowedMethods: []string{"get", "post", "delete"},
+	})
+
+	req, _ := http.NewRequest(http.MethodOptions, "http://example.com/foo", nil)
+	req.Header.Set("Origin", "http://foo.com")
+	req.Header.Set("Access-Control-Request-Method", "GET")
+
+	res := httptest.NewRecorder()
+	c.Handler(testHandler).ServeHTTP(res, req)
+
+	allowMethod := res.Header().Get("Access-Control-Allow-Methods")
+	if allowMethod != "GET" {
+		t.Errorf("expected Access-Control-Allow-Methods 'GET', got %q", allowMethod)
+	}
+}
+
+func TestOriginAllowedNilSafe(t *testing.T) {
+	var c *Cors
+	if c.OriginAllowed(nil) {
+		t.Error("expected false for nil Cors and nil request")
+	}
+
+	validC := Default()
+	if validC.OriginAllowed(nil) {
+		t.Error("expected false for nil request")
+	}
 }
