@@ -92,7 +92,7 @@ handler = c.Handler(handler)
 Deprecated: use `AllowOriginVaryRequestFunc` instead.
 * **AllowOriginVaryRequestFunc** `func(r *http.Request, origin string) (bool, []string)`: A custom function to validate the origin. It takes the HTTP Request object and the origin as argument and returns true if allowed or false otherwise with a list of headers used to take that decision if any so they can be added to the Vary header. If this option is set, the contents of `AllowedOrigins`, `AllowOriginFunc` and `AllowOriginRequestFunc` are ignored.
 * **AllowedMethods** `[]string`: A list of methods the client is allowed to use with cross-domain requests. Default value is simple methods (`GET` and `POST`).
-* **AllowedHeaders** `[]string`: A list of non simple headers the client is allowed to use with cross-domain requests.
+* **AllowedHeaders** `[]string`: A list of non simple headers the client is allowed to use with cross-domain requests. If the special `*` value is present in the list, all headers will be allowed. Default value is `["Accept", "Content-Type", "X-Requested-With"]`.
 * **ExposedHeaders** `[]string`: Indicates which headers are safe to expose to the API of a CORS API specification.
 * **AllowCredentials** `bool`: Indicates whether the request can include user credentials like cookies, HTTP authentication or client side SSL certificates. The default is `false`.
 * **AllowPrivateNetwork** `bool`: Indicates whether to accept cross-origin requests over a private network.
