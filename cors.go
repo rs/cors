@@ -212,7 +212,7 @@ func New(options Options) *Cors {
 		// Default is spec's "simple" methods
 		c.allowedMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 	} else {
-		c.allowedMethods = options.AllowedMethods
+		c.allowedMethods = convert(options.AllowedMethods, strings.ToUpper)
 	}
 
 	// Options Success Status Code
@@ -334,9 +334,11 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	// see https://github.com/rs/cors/issues/10,
 	//     https://github.com/rs/cors/commit/dbdca4d95feaa7511a46e6f1efb3b3aa505bc43f#commitcomment-12352001
 	if vary, found := headers["Vary"]; found {
-		headers["Vary"] = append(vary, c.preflightVary[0])
+		if !slices.Contains(vary, c.preflightVary[0]) {
+			headers["Vary"] = append(slices.Clone(vary), c.preflightVary[0])
+		}
 	} else {
-		headers["Vary"] = c.preflightVary
+		headers["Vary"] = []string{c.preflightVary[0]}
 	}
 	allowed, additionalVaryHeaders := c.isOriginAllowed(r, origin)
 	if len(additionalVaryHeaders) > 0 {
@@ -368,29 +370,29 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if c.allowedOriginsAll {
-		headers["Access-Control-Allow-Origin"] = headerOriginAll
+		headers["Access-Control-Allow-Origin"] = []string{"*"}
 	} else {
-		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
+		headers["Access-Control-Allow-Origin"] = []string{origin}
 	}
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough
-	headers["Access-Control-Allow-Methods"] = r.Header["Access-Control-Request-Method"]
+	headers["Access-Control-Allow-Methods"] = []string{reqMethod}
 	for _, reqHeader := range reqHeaders {
 		if reqHeader != "" {
 			// Spec says: Since the list of headers can be unbounded, simply returning supported headers
 			// from Access-Control-Request-Headers can be enough
-			headers["Access-Control-Allow-Headers"] = reqHeaders
+			headers["Access-Control-Allow-Headers"] = slices.Clone(reqHeaders)
 			break
 		}
 	}
 	if c.allowCredentials {
-		headers["Access-Control-Allow-Credentials"] = headerTrue
+		headers["Access-Control-Allow-Credentials"] = []string{"true"}
 	}
 	if c.allowPrivateNetwork && r.Header.Get("Access-Control-Request-Private-Network") == "true" {
-		headers["Access-Control-Allow-Private-Network"] = headerTrue
+		headers["Access-Control-Allow-Private-Network"] = []string{"true"}
 	}
 	if len(c.maxAge) > 0 {
-		headers["Access-Control-Max-Age"] = c.maxAge
+		headers["Access-Control-Max-Age"] = slices.Clone(c.maxAge)
 	}
 	c.logf("  Preflight response headers: %v", headers)
 }
@@ -403,10 +405,12 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	allowed, additionalVaryHeaders := c.isOriginAllowed(r, origin)
 
 	// Always set Vary, see https://github.com/rs/cors/issues/10
-	if vary := headers["Vary"]; vary == nil {
-		headers["Vary"] = headerVaryOrigin
+	if vary, found := headers["Vary"]; found {
+		if !slices.Contains(vary, "Origin") {
+			headers["Vary"] = append(slices.Clone(vary), "Origin")
+		}
 	} else {
-		headers["Vary"] = append(vary, headerVaryOrigin[0])
+		headers["Vary"] = []string{"Origin"}
 	}
 	if len(additionalVaryHeaders) > 0 {
 		headers.Add("Vary", strings.Join(convert(additionalVaryHeaders, http.CanonicalHeaderKey), ", "))
@@ -429,15 +433,15 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if c.allowedOriginsAll {
-		headers["Access-Control-Allow-Origin"] = headerOriginAll
+		headers["Access-Control-Allow-Origin"] = []string{"*"}
 	} else {
-		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
+		headers["Access-Control-Allow-Origin"] = []string{origin}
 	}
 	if len(c.exposedHeaders) > 0 {
-		headers["Access-Control-Expose-Headers"] = c.exposedHeaders
+		headers["Access-Control-Expose-Headers"] = slices.Clone(c.exposedHeaders)
 	}
 	if c.allowCredentials {
-		headers["Access-Control-Allow-Credentials"] = headerTrue
+		headers["Access-Control-Allow-Credentials"] = []string{"true"}
 	}
 	c.logf("  Actual response added headers: %v", headers)
 }
@@ -456,6 +460,9 @@ func (c *Cors) logf(format string, a ...any) {
 // WebSocket's CheckOrigin; the middleware itself still lets an
 // origin-less request through.
 func (c *Cors) OriginAllowed(r *http.Request) bool {
+	if c == nil || r == nil {
+		return false
+	}
 	origin := r.Header.Get("Origin")
 	allowed, _ := c.isOriginAllowed(r, origin)
 	return allowed
@@ -486,6 +493,7 @@ func (c *Cors) isMethodAllowed(method string) bool {
 		// If no method allowed, always return false, even for preflight request
 		return false
 	}
+	method = strings.ToUpper(method)
 	if method == http.MethodOptions {
 		// Always allow preflight requests
 		return true
