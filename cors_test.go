@@ -812,6 +812,44 @@ func TestIsMethodAllowedReturnsTrueWithOptions(t *testing.T) {
 	}
 }
 
+func TestHandlerFuncOptionsPassthrough(t *testing.T) {
+	s := New(Options{OptionsPassthrough: true})
+
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.org")
+	req.Header.Add("Access-Control-Request-Method", "GET")
+
+	t.Run("Handler", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.Handler(testHandler).ServeHTTP(res, req)
+		assertResponse(t, res, http.StatusOK)
+		if string(res.Body.Bytes()) != string(testResponse) {
+			t.Errorf("body = %q, want %q", res.Body.String(), testResponse)
+		}
+	})
+	t.Run("HandlerFunc", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.HandlerFunc(res, req)
+		// Frameworks using HandlerFunc (Martini, the Gin wrapper) run the
+		// application's own OPTIONS handler after HandlerFunc returns; like
+		// Handler and ServeHTTP, HandlerFunc must leave the response status
+		// to it when OptionsPassthrough is set.
+		testHandler.ServeHTTP(res, req)
+		assertResponse(t, res, http.StatusOK)
+		if string(res.Body.Bytes()) != string(testResponse) {
+			t.Errorf("body = %q, want %q", res.Body.String(), testResponse)
+		}
+	})
+	t.Run("Negroni", func(t *testing.T) {
+		res := httptest.NewRecorder()
+		s.ServeHTTP(res, req, testHandler)
+		assertResponse(t, res, http.StatusOK)
+		if string(res.Body.Bytes()) != string(testResponse) {
+			t.Errorf("body = %q, want %q", res.Body.String(), testResponse)
+		}
+	})
+}
+
 func TestOptionsSuccessStatusCodeDefault(t *testing.T) {
 	s := New(Options{
 		// Intentionally left blank.

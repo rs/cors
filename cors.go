@@ -297,7 +297,9 @@ func (c *Cors) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		c.logf("HandlerFunc: Preflight request")
 		c.handlePreflight(w, r)
 
-		w.WriteHeader(c.optionsSuccessStatus)
+		if !c.optionPassthrough {
+			w.WriteHeader(c.optionsSuccessStatus)
+		}
 	} else {
 		c.logf("HandlerFunc: Actual request")
 		c.handleActualRequest(w, r)
