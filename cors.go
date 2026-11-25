@@ -351,6 +351,11 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 		c.logf("  Preflight aborted: origin '%s' not allowed", origin)
 		return
 	}
+	if c.allowedOriginsAll {
+		headers["Access-Control-Allow-Origin"] = headerOriginAll
+	} else {
+		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
+	}
 
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
 	if !c.isMethodAllowed(reqMethod) {
@@ -366,11 +371,6 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if found && !c.allowedHeadersAll && !c.allowedHeaders.Accepts(reqHeaders) {
 		c.logf("  Preflight aborted: headers '%v' not allowed", reqHeaders)
 		return
-	}
-	if c.allowedOriginsAll {
-		headers["Access-Control-Allow-Origin"] = headerOriginAll
-	} else {
-		headers["Access-Control-Allow-Origin"] = r.Header["Origin"]
 	}
 	// Spec says: Since the list of methods can be unbounded, simply returning the method indicated
 	// by Access-Control-Request-Method (if supported) can be enough

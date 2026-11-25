@@ -331,7 +331,8 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Request-Method": {"PATCH"},
 			},
 			http.Header{
-				"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Vary":                        {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin": {"http://foobar.com"},
 			},
 			true,
 		},
@@ -408,7 +409,8 @@ func TestSpec(t *testing.T) {
 				"Access-Control-Request-Headers": {"x-header-1,x-header-3"},
 			},
 			http.Header{
-				"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Vary":                        {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+				"Access-Control-Allow-Origin": {"http://foobar.com"},
 			},
 			true,
 		},
@@ -664,10 +666,10 @@ func TestPreflightRequestHeaderFields(t *testing.T) {
 					assertResponse(t, res, http.StatusNoContent)
 
 					want := http.Header{
-						"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+						"Vary":                        {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+						"Access-Control-Allow-Origin": {"*"},
 					}
 					if !tc.denied || wildcard {
-						want["Access-Control-Allow-Origin"] = []string{"*"}
 						want["Access-Control-Allow-Methods"] = []string{http.MethodGet}
 						if tc.want != nil {
 							want["Access-Control-Allow-Headers"] = tc.want
@@ -759,6 +761,24 @@ func TestHandlePreflightInvalidOriginAbortion(t *testing.T) {
 
 	assertHeaders(t, res.Header(), http.Header{
 		"Vary": {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+	})
+}
+
+func TestHandlePreflightAllowedOriginBeforeMethodAbortion(t *testing.T) {
+	s := New(Options{
+		AllowedOrigins: []string{"http://example.com"},
+		AllowedMethods: []string{"POST"},
+	})
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com")
+	req.Header.Add("Access-Control-Request-Method", "PATCH")
+
+	s.handlePreflight(res, req)
+
+	assertHeaders(t, res.Header(), http.Header{
+		"Vary":                        {"Origin, Access-Control-Request-Method, Access-Control-Request-Headers"},
+		"Access-Control-Allow-Origin": {"http://example.com"},
 	})
 }
 
